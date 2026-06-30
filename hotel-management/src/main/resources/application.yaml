@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: hotel-management
+
+  datasource:
+    # 'db' ifadesi, docker-compose dosyasındaki PostgreSQL servisimizin adı olacak.
+    url: jdbc:postgresql://db:5432/agency_db
+    username: postgres
+    password: secret_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # ddl-auto: update sayesinde, yazdığımız Java sınıflarına (Entity) göre 
+      # PostgreSQL'de tablolar otomatik olarak oluşturulacak/güncellenecek.
+      ddl-auto: update
+    show-sql: true # Spring'in arka planda çalıştırdığı SQL sorgularını terminalde görmek için
+    properties:
+      hibernate:
+        format_sql: true # SQL sorgularını daha okunaklı formatta yazdırır
+        dialect: org.hibernate.dialect.PostgreSQLDialect
