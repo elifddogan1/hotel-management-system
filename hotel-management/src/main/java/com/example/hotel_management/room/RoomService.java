@@ -77,6 +77,6 @@ public class RoomService {
     private boolean isRoomExists(String roomNumber, Long hotelId) {
         if (!hotelRepository.existsById(hotelId))
             throw new IllegalArgumentException("Hotel cannot be found with hotel ID:" + hotelId);
-        return roomRepository.isExistsByRoomNumberAndHotelId(roomNumber, hotelId);
+        return roomRepository.existsByRoomNumberAndHotelId(roomNumber, hotelId);
     }
 }

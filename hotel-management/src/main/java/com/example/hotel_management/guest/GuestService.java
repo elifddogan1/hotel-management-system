@@ -62,7 +62,7 @@ public class GuestService {
         }
 
         public void cancelReservation(Long voucherNumber) {
-                boolean exists = guestRepository.existByVoucherNumber(voucherNumber);
+                boolean exists = guestRepository.existsByVoucherNumber(voucherNumber);
                 if (!exists) {
                         throw new EntityNotFoundException(
                                         "Reservation with ID " + voucherNumber + " could not be found.");

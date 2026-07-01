@@ -40,13 +40,13 @@ public class GuestController {
         return guestService.searchAndSortGuests(lastName, voucherNumber, sortBy, direction);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/{guestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGuest(@PathVariable Long guestId) {
         guestService.deleteGuest(guestId);
     }
 
-    @DeleteMapping("/cancel-reservation")
+    @DeleteMapping("/cancel-reservation/{voucherNumber}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelReservation(@PathVariable Long voucherNumber) {
         guestService.cancelReservation(voucherNumber);

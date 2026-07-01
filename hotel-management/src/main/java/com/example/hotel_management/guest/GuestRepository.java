@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GuestRepository extends JpaRepository<Guest, Long>, JpaSpecificationExecutor<Guest> {
 
-    boolean existByVoucherNumber(Long voucherNumber);
+    boolean existsByVoucherNumber(Long voucherNumber);
 
     List<Guest> findByVoucherNumber(Long voucherNumber);
 }
