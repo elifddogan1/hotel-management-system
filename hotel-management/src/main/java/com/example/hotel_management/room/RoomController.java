@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class RoomController {
     private final RoomService roomService;
 
-    @GetMapping("/available")
+    @GetMapping
     public List<Room> getAvailableRooms(@RequestParam Long hotelId, int numberOfPerson, LocalDate checkInDate,
             LocalDate checkOutDate) {
         return roomService.findOptimalRoom(hotelId, numberOfPerson, checkInDate, checkOutDate);
@@ -42,7 +42,7 @@ public class RoomController {
         return roomService.createRoom(request);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{roomId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRoom(@PathVariable Long roomId) {
         roomService.deleteRoom(roomId);
