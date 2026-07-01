@@ -1,0 +1,29 @@
+services:
+  # 1. Veritabanı Servisimiz
+  db:
+    image: postgres:15-alpine
+    container_name: agency_postgres_db
+    environment:
+      POSTGRES_DB: agency_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. Spring Boot Backend Servisimiz
+  backend:
+    build: ./hotel-management # 🔥 './backend' yerine tam klasör adını yazdık!
+    container_name: hotel_backend_api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/agency_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: secret_password
+
+volumes:
+  pgdata:

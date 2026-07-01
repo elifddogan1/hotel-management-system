@@ -19,3 +19,11 @@ spring:
       hibernate:
         format_sql: true # SQL sorgularını daha okunaklı formatta yazdırır
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Eşittir (=) işaretleri temizlendi, iki nokta ve boşluk getirildi.
+# spring ile aynı hizada (en dışta) olmalı.
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
