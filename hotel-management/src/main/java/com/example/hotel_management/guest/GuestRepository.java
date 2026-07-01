@@ -1,13 +1,15 @@
 package com.example.hotel_management.guest;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import com.example.hotel_management.guest.request.GuestCreationRequest;
-
 @Repository
 public interface GuestRepository extends JpaRepository<Guest, Long>, JpaSpecificationExecutor<Guest> {
 
-    Guest save(GuestCreationRequest request);
+    boolean existByVoucherNumber(Long voucherNumber);
+
+    List<Guest> findByVoucherNumber(Long voucherNumber);
 }
