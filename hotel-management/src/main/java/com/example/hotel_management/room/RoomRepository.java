@@ -13,4 +13,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     List<Room> findByMaxCapacityGreaterThanEqual(int capacity);
 
+    boolean isExistsByIdAndHotelId(Long roomId, Long hotelId);
+
+    boolean isExistsByRoomNumberAndHotelId(String roomNumber, Long hotelId);
+
 }
