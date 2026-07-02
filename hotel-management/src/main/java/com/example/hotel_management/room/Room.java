@@ -49,4 +49,8 @@ public class Room {
     @JsonIgnore
     private List<Guest> guests;
 
+    public Long getHotelId() {
+        return hotel != null ? hotel.getId() : null;
+    }
+
 }
