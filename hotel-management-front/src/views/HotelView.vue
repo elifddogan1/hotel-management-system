@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { hotelService, type Hotel } from '../services/hotelService';
 // Profesyonel ikonları projemize dahil ediyoruz
-import { Building, MapPin, Phone, Settings2, Trash2, PlusCircle, Loader2 } from 'lucide-vue-next';
+import { Building, MapPin, Phone, Settings2, Trash2, PlusCircle, Loader2, Pencil, X } from 'lucide-vue-next';
 
 const router = useRouter();
 const hotels = ref<Hotel[]>([]);
@@ -11,6 +11,14 @@ const isLoading = ref(true);
 const errorMessage = ref('');
 
 const newHotel = ref<Hotel>({
+  name: '',
+  location: '',
+  contactInfo: ''
+});
+
+const isEditModalOpen = ref(false);
+const editHotelForm = ref<Hotel>({
+  id: undefined,
   name: '',
   location: '',
   contactInfo: ''
@@ -54,6 +62,31 @@ const handleDeleteHotel = async (id: number | undefined) => {
     await loadHotels();
   } catch (error) {
     alert('Otel silinirken bir hata oluştu.');
+    console.error(error);
+  }
+};
+
+const openEditHotelModal = (hotel: Hotel) => {
+  editHotelForm.value = { ...hotel };
+  isEditModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false;
+};
+
+const handleUpdateHotel = async () => {
+  if (!editHotelForm.value.id || !editHotelForm.value.name || !editHotelForm.value.location) {
+    alert('Lütfen gerekli alanları doldurun!');
+    return;
+  }
+
+  try {
+    await hotelService.updateHotel(editHotelForm.value.id, editHotelForm.value);
+    isEditModalOpen.value = false;
+    await loadHotels();
+  } catch (error) {
+    alert('Otel güncellenirken bir hata oluştu.');
     console.error(error);
   }
 };
@@ -166,6 +199,9 @@ onMounted(() => {
                   <Settings2 :size="18" />
                   <span>Yönet</span>
                 </button>
+                <button @click="openEditHotelModal(hotel)" class="btn-edit" title="Oteli Düzenle">
+                  <Pencil :size="18" />
+                </button>
                 <button @click="handleDeleteHotel(hotel.id)" class="btn-danger" title="Oteli Sil">
                   <Trash2 :size="18" />
                 </button>
@@ -173,6 +209,53 @@ onMounted(() => {
             </div>
           </div>
         </section>
+      </div>
+    </div>
+
+    <!-- HOTEL EDIT MODAL -->
+    <div v-if="isEditModalOpen" class="modal-overlay" @click.self="closeEditModal">
+      <div class="glass-card modal-content">
+        <div class="modal-header">
+          <h2>Oteli Düzenle</h2>
+          <button @click="closeEditModal" class="btn-close">
+            <X :size="20" />
+          </button>
+        </div>
+        <form @submit.prevent="handleUpdateHotel">
+          <div class="form-group">
+            <label for="edit-name">Otel Adı <span class="required">*</span></label>
+            <input 
+              v-model="editHotelForm.name" 
+              type="text" 
+              id="edit-name" 
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="edit-location">Konum / Şehir <span class="required">*</span></label>
+            <input 
+              v-model="editHotelForm.location" 
+              type="text" 
+              id="edit-location" 
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="edit-contact">İletişim Bilgisi</label>
+            <textarea 
+              v-model="editHotelForm.contactInfo" 
+              id="edit-contact" 
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="closeEditModal" class="btn-secondary">İptal</button>
+            <button type="submit" class="btn-primary">Güncelle</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -372,5 +455,94 @@ input::placeholder, textarea::placeholder { color: #94a3b8; }
   .grid-layout { grid-template-columns: 1fr; } 
   .form-section { order: 2; }
   .list-section { order: 1; }
+}
+
+/* Modal Tasarımı */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+.modal-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.btn-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Edit Butonu */
+.btn-edit {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 15px;
+  background: #f0fdf4; 
+  border: 1px solid #bbf7d0; 
+  color: #16a34a; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+}
+.btn-edit:hover { background: #16a34a; color: white; border-color: #16a34a; }
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 </style>

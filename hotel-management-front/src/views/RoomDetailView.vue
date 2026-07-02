@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { roomService, type Room } from '../services/roomService';
+import { roomService, type Room, type RoomCreationRequest } from '../services/roomService';
 import { guestService, type Guest } from '../services/guestService';
 // Profesyonel tasarıma uygun vektörel ikonlarımızı dahil ettik
-import { ArrowLeft, BedDouble, Users, CalendarPlus, CalendarClock, Loader2, CheckCircle2, XCircle, UserCircle } from 'lucide-vue-next';
+import { ArrowLeft, BedDouble, Users, CalendarPlus, CalendarClock, Loader2, CheckCircle2, XCircle, UserCircle, Pencil, X } from 'lucide-vue-next';
 
 const route = useRoute();
 const router = useRouter();
@@ -49,6 +49,48 @@ const isRoomCurrentlyOccupied = computed(() => {
   });
 });
 
+const isEditModalOpen = ref(false);
+const editRoomForm = ref<RoomCreationRequest>({
+  roomNumber: '',
+  roomType: 'STANDARD',
+  maxCapacity: 2
+});
+
+const openEditRoomModal = () => {
+  if (room.value) {
+    editRoomForm.value = {
+      roomNumber: room.value.roomNumber,
+      roomType: room.value.roomType,
+      maxCapacity: room.value.maxCapacity
+    };
+    isEditModalOpen.value = true;
+  }
+};
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false;
+};
+
+const handleUpdateRoom = async () => {
+  if (!editRoomForm.value.roomNumber) {
+    alert('Lütfen oda numarasını girin!');
+    return;
+  }
+
+  try {
+    await roomService.updateRoom(roomId, editRoomForm.value);
+    isEditModalOpen.value = false;
+    await loadData();
+  } catch (error: any) {
+    if (error.response && error.response.data && error.response.data.message) {
+      alert('Hata: ' + error.response.data.message);
+    } else {
+      alert('Oda güncellenirken bir hata oluştu.');
+    }
+    console.error(error);
+  }
+};
+
 const goToReservation = () => {
   router.push({ name: 'reservation', query: { hotelId: hotelId, roomId: roomId } });
 };
@@ -87,7 +129,11 @@ onMounted(loadData);
               <span class="badge blue-badge">{{ room.roomType }}</span>
             </div>
           </div>
-          <div class="header-right">
+          <div class="header-right" style="display: flex; gap: 12px; align-items: center;">
+            <button @click="openEditRoomModal" class="btn-edit" title="Odayı Düzenle">
+              <Pencil :size="18" />
+              <span>Odayı Düzenle</span>
+            </button>
             <div class="meta-item">
               <Users :size="20" class="text-slate" />
               <span>Maksimum Kapasite: <strong>{{ room.maxCapacity }} Kişi</strong></span>
@@ -153,6 +199,41 @@ onMounted(loadData);
             </div>
           </section>
         </div>
+      </div>
+    </div>
+
+    <!-- ROOM EDIT MODAL -->
+    <div v-if="isEditModalOpen" class="modal-overlay" @click.self="closeEditModal">
+      <div class="glass-card modal-content">
+        <div class="modal-header">
+          <h2>Odayı Düzenle</h2>
+          <button @click="closeEditModal" class="btn-close">
+            <X :size="20" />
+          </button>
+        </div>
+        <form @submit.prevent="handleUpdateRoom">
+          <div class="form-group">
+            <label>Oda Numarası / Adı <span class="required">*</span></label>
+            <input v-model="editRoomForm.roomNumber" type="text" required />
+          </div>
+          <div class="form-group">
+            <label>Oda Tipi <span class="required">*</span></label>
+            <select v-model="editRoomForm.roomType" required>
+              <option value="STANDARD">Standard Room</option>
+              <option value="DELUXE">Deluxe Room</option>
+              <option value="SUITE">Suite Room</option>
+              <option value="FAMILY">Family Room</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Maksimum Kapasite <span class="required">*</span></label>
+            <input v-model.number="editRoomForm.maxCapacity" type="number" min="1" max="10" required />
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="closeEditModal" class="btn-secondary">İptal</button>
+            <button type="submit" class="btn-primary">Güncelle</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -274,5 +355,106 @@ onMounted(loadData);
 @media (max-width: 992px) { 
   .main-grid { grid-template-columns: 1fr; } 
   .room-header { flex-direction: column; align-items: flex-start; }
+}
+
+/* Modal Tasarımı */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+.modal-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.btn-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Form Elemanları */
+.form-group { margin-bottom: 20px; }
+label { display: block; margin-bottom: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
+.required { color: #e11d48; }
+input, select { 
+  width: 100%; padding: 12px 15px; background: #ffffff; border: 1px solid #cbd5e1; 
+  border-radius: 10px; color: #1e293b; font-size: 1rem; transition: all 0.3s; box-sizing: border-box; outline: none; 
+}
+input:focus, select:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+
+/* Edit Butonu */
+.btn-edit {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px;
+  background: #f0fdf4; 
+  border: 1px solid #bbf7d0; 
+  color: #16a34a; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s; 
+}
+.btn-edit:hover { background: #16a34a; color: white; border-color: #16a34a; }
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 </style>

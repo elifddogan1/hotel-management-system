@@ -1,13 +1,25 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { guestService, type Guest, type GuestSearchParams } from '../services/guestService';
+import { guestService, type Guest, type GuestSearchParams, type GuestCreationRequest } from '../services/guestService';
+import { roomService, type Room } from '../services/roomService';
 // Profesyonel ve canlı tasarımlar için ikon setimizi dahil ettik
-import { Users, Filter, Ticket, BedDouble, Calendar, TicketX, Loader2, SearchX, ArrowUpDown } from 'lucide-vue-next';
+import { Users, Filter, Ticket, BedDouble, Calendar, TicketX, Loader2, SearchX, ArrowUpDown, Pencil, X, Plus, Trash2 } from 'lucide-vue-next';
 
 const guests = ref<Guest[]>([]);
 const isLoading = ref(true);
 
 const searchParams = ref<GuestSearchParams>({ lastName: '', voucherNumber: '', sortBy: 'id', direction: 'asc' });
+
+const isEditModalOpen = ref(false);
+const editReservationForm = ref<GuestCreationRequest>({
+  voucherNumber: '',
+  roomId: 0,
+  checkInDate: '',
+  checkOutDate: '',
+  guests: []
+});
+const hotelRooms = ref<Room[]>([]);
+const editErrorMessage = ref('');
 
 const executeSearch = async () => {
   isLoading.value = true;
@@ -27,6 +39,76 @@ const handleCancelVoucher = async (voucher: string) => {
     executeSearch(); // Listeyi yenile
   } catch (error) {
     alert('İptal işlemi başarısız.');
+  }
+};
+
+const openEditReservationModal = async (guest: Guest) => {
+  editErrorMessage.value = '';
+  try {
+    const resGuests = await guestService.getGuests({ voucherNumber: guest.voucherNumber });
+    if (resGuests.length === 0 || !resGuests[0]) return;
+    
+    const firstGuest = resGuests[0];
+    const hId = firstGuest.room?.hotelId;
+    if (hId) {
+      hotelRooms.value = await roomService.getRoomsByHotelId(hId);
+    } else {
+      hotelRooms.value = [];
+    }
+
+    editReservationForm.value = {
+      voucherNumber: firstGuest.voucherNumber,
+      roomId: firstGuest.room?.id || 0,
+      checkInDate: firstGuest.checkInDate,
+      checkOutDate: firstGuest.checkOutDate,
+      guests: resGuests.map(g => ({ firstname: g.firstname, lastname: g.lastname }))
+    };
+    isEditModalOpen.value = true;
+  } catch (error) {
+    alert('Rezervasyon detayları yüklenirken hata oluştu.');
+    console.error(error);
+  }
+};
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false;
+};
+
+const addGuestToEditForm = () => {
+  editReservationForm.value.guests.push({ firstname: '', lastname: '' });
+};
+
+const removeGuestFromEditForm = (index: number) => {
+  if (editReservationForm.value.guests.length > 1) {
+    editReservationForm.value.guests.splice(index, 1);
+  } else {
+    alert('En az bir misafir bulunmalıdır.');
+  }
+};
+
+const handleUpdateReservation = async () => {
+  editErrorMessage.value = '';
+  if (!editReservationForm.value.roomId || !editReservationForm.value.checkInDate || !editReservationForm.value.checkOutDate) {
+    alert('Lütfen gerekli tüm alanları doldurun!');
+    return;
+  }
+  
+  if (editReservationForm.value.guests.some(g => !g.firstname || !g.lastname)) {
+    alert('Lütfen tüm misafir bilgilerini doldurun!');
+    return;
+  }
+
+  try {
+    await guestService.updateReservation(editReservationForm.value.voucherNumber, editReservationForm.value);
+    isEditModalOpen.value = false;
+    await executeSearch();
+  } catch (error: any) {
+    if (error.response && error.response.data && error.response.data.message) {
+      editErrorMessage.value = error.response.data.message;
+    } else {
+      editErrorMessage.value = 'Rezervasyon güncellenirken bir hata oluştu.';
+    }
+    console.error(error);
   }
 };
 
@@ -121,6 +203,10 @@ onMounted(() => {
             </div>
             
             <div class="card-actions">
+              <button @click="openEditReservationModal(guest)" class="btn-manage-res" style="margin-bottom: 8px;">
+                <Pencil :size="18" />
+                <span>Rezervasyonu Düzenle</span>
+              </button>
               <button @click="handleCancelVoucher(guest.voucherNumber)" class="btn-danger">
                 <TicketX :size="18" />
                 <span>Rezervasyonu İptal Et</span>
@@ -129,6 +215,74 @@ onMounted(() => {
           </div>
         </div>
       </section>
+    </div>
+
+    <!-- RESERVATION EDIT MODAL -->
+    <div v-if="isEditModalOpen" class="modal-overlay" @click.self="closeEditModal">
+      <div class="glass-card modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+          <h2>Rezervasyonu Düzenle ({{ editReservationForm.voucherNumber }})</h2>
+          <button @click="closeEditModal" class="btn-close">
+            <X :size="20" />
+          </button>
+        </div>
+
+        <div v-if="editErrorMessage" class="error-banner">
+          <p>{{ editErrorMessage }}</p>
+        </div>
+
+        <form @submit.prevent="handleUpdateReservation">
+          <div class="form-row">
+            <div class="form-group half">
+              <label>Giriş Tarihi <span class="required">*</span></label>
+              <input v-model="editReservationForm.checkInDate" type="date" required />
+            </div>
+            <div class="form-group half">
+              <label>Çıkış Tarihi <span class="required">*</span></label>
+              <input v-model="editReservationForm.checkOutDate" type="date" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Oda Seçimi <span class="required">*</span></label>
+            <select v-model="editReservationForm.roomId" required>
+              <option value="" disabled>Lütfen bir oda seçin</option>
+              <option v-for="room in hotelRooms" :key="room.id" :value="room.id">
+                Oda {{ room.roomNumber }} - {{ room.roomType }} (Maks: {{ room.maxCapacity }} Kişi)
+              </option>
+            </select>
+          </div>
+
+          <div class="guests-section">
+            <div class="section-header-sub">
+              <h3>Misafirler (Kişi Sayısı: {{ editReservationForm.guests.length }})</h3>
+              <button type="button" @click="addGuestToEditForm" class="btn-add-guest">
+                <Plus :size="16" /> Misafir Ekle
+              </button>
+            </div>
+
+            <div v-for="(g, index) in editReservationForm.guests" :key="index" class="guest-input-row">
+              <span class="guest-num">#{{ index + 1 }}</span>
+              <input v-model="g.firstname" type="text" placeholder="Adı" required class="guest-input" />
+              <input v-model="g.lastname" type="text" placeholder="Soyadı" required class="guest-input" />
+              <button 
+                type="button" 
+                @click="removeGuestFromEditForm(index)" 
+                class="btn-remove-guest" 
+                title="Misafiri Çıkar"
+                :disabled="editReservationForm.guests.length <= 1"
+              >
+                <Trash2 :size="16" />
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="closeEditModal" class="btn-secondary">İptal</button>
+            <button type="submit" class="btn-primary">Rezervasyonu Güncelle</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -237,5 +391,209 @@ input::placeholder { color: #94a3b8; }
 @media (max-width: 600px) { 
   .search-bar { flex-direction: column; align-items: stretch; }
   .input-group { width: 100%; }
+}
+
+/* Modal Tasarımı */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+.modal-content {
+  width: 90%;
+  max-width: 600px;
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+.modal-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.btn-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+.btn-secondary {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Edit Reservation Button */
+.btn-manage-res {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  padding: 11px 16px;
+  background: #f0f9ff; 
+  border: 1px solid #bae6fd; 
+  color: #0284c7; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s; 
+}
+.btn-manage-res:hover { background: #0ea5e9; color: white; border-color: #0ea5e9; }
+
+/* Form Group Grid */
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.form-group.half {
+  flex: 1;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #475569;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.required {
+  color: #e11d48;
+}
+
+/* Sub Sections for Guests */
+.guests-section {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 20px;
+}
+.section-header-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.section-header-sub h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.btn-add-guest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-add-guest:hover {
+  background: #16a34a;
+  color: white;
+}
+
+.guest-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.guest-num {
+  font-weight: 700;
+  color: #64748b;
+  min-width: 25px;
+}
+.guest-input {
+  flex: 1;
+}
+.btn-remove-guest {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #e11d48;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-remove-guest:hover:not(:disabled) {
+  background: #e11d48;
+  color: white;
+  border-color: #e11d48;
+}
+.btn-remove-guest:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error Banner */
+.error-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.error-banner p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 </style>
