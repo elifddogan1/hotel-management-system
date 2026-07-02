@@ -18,23 +18,41 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
 
+    public List<Room> getAllRooms() {
+        return roomRepository.findAll();
+    }
+
+    public List<Room> getRoomsByHotelId(Long hotelId) {
+        return roomRepository.findByHotelId(hotelId);
+    }
+
+    public Room getRoomById(Long roomId) {
+        return roomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room with ID" + roomId + "couldn't be found"));
+    }
+
     public Room createRoom(RoomCreationRequest request) {
-        if (isRoomExists(request.getRoomNumber(), request.getHotelId())) {
-            throw new IllegalArgumentException("This room is exist");
+        // Sadece oda numarası kontrolü yeterli (otel zaten URL'den geldiği için
+        // güvenilir)
+        if (roomRepository.existsByRoomNumberAndHotelId(request.getRoomNumber(), request.getHotelId())) {
+            throw new IllegalArgumentException("This room already exists in this hotel.");
         }
 
+        // Oteli çekiyoruz (Otel id'si geçersizse EntityNotFoundException fırlatılır)
         Hotel hotel = hotelRepository.findById(request.getHotelId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Hotel with ID " + request.getHotelId() + " could not be found."));
 
+        // Odayı oluşturuyoruz
         Room room = Room.builder()
                 .roomNumber(request.getRoomNumber())
                 .roomType(request.getRoomType())
                 .maxCapacity(request.getMaxCapacity())
                 .hotel(hotel)
                 .build();
-        return room;
 
+        // Veritabanına kaydedip geri dönüyoruz
+        return roomRepository.save(room);
     }
 
     public void deleteRoom(Long roomId) {
@@ -74,9 +92,4 @@ public class RoomService {
 
     }
 
-    private boolean isRoomExists(String roomNumber, Long hotelId) {
-        if (!hotelRepository.existsById(hotelId))
-            throw new IllegalArgumentException("Hotel cannot be found with hotel ID:" + hotelId);
-        return roomRepository.existsByRoomNumberAndHotelId(roomNumber, hotelId);
-    }
 }

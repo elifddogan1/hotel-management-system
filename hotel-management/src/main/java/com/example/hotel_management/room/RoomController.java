@@ -19,26 +19,44 @@ import com.example.hotel_management.room.request.RoomCreationRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/room")
+@RequestMapping("/api/rooms")
 @RequiredArgsConstructor
 public class RoomController {
     private final RoomService roomService;
 
+    @GetMapping("/all")
+    public List<Room> getAllRooms() {
+        return roomService.getAllRooms();
+    }
+
+    @GetMapping("/hotel/{hotelId}")
+    public List<Room> getRoomsByHotelId(@PathVariable Long hotelId) {
+        return roomService.getRoomsByHotelId(hotelId);
+    }
+
+    @GetMapping("/{roomId}")
+    public Room getRoomById(@PathVariable Long roomId) {
+        return roomService.getRoomById(roomId);
+    }
+
     @GetMapping
-    public List<Room> getAvailableRooms(@RequestParam Long hotelId, int numberOfPerson, LocalDate checkInDate,
-            LocalDate checkOutDate) {
+    public List<Room> getAvailableRooms(@RequestParam Long hotelId, @RequestParam int numberOfPerson,
+            @RequestParam LocalDate checkInDate,
+            @RequestParam LocalDate checkOutDate) {
         return roomService.findOptimalRoom(hotelId, numberOfPerson, checkInDate, checkOutDate);
     }
 
     @GetMapping("/available-all")
-    public List<Room> getAvailableRoomsWithoutHotelFilter(@RequestParam int numberOfPerson, LocalDate checkInDate,
-            LocalDate checkOutDate) {
+    public List<Room> getAvailableRoomsWithoutHotelFilter(@RequestParam int numberOfPerson,
+            @RequestParam LocalDate checkInDate,
+            @RequestParam LocalDate checkOutDate) {
         return roomService.findOptimalRoomWithoutHotelFilter(numberOfPerson, checkInDate, checkOutDate);
     }
 
-    @PostMapping
+    @PostMapping("/hotel/{hotelId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public Room createRoom(@RequestBody RoomCreationRequest request) {
+    public Room createRoom(@PathVariable Long hotelId, @RequestBody RoomCreationRequest request) {
+        request.setHotelId(hotelId);
         return roomService.createRoom(request);
     }
 
