@@ -11,9 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GuestRepository extends JpaRepository<Guest, Long>, JpaSpecificationExecutor<Guest> {
 
-    boolean existsByVoucherNumber(Long voucherNumber);
+    boolean existsByVoucherNumber(String voucherNumber);
 
-    List<Guest> findByVoucherNumber(Long voucherNumber);
+    List<Guest> findByVoucherNumber(String voucherNumber);
 
     @Query("SELECT g FROM Guest g WHERE g.room.hotel.id = :hotelId")
     List<Guest> findByRoomHotelId(@Param("hotelId") Long hotelId);

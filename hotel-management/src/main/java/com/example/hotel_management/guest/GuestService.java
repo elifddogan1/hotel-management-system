@@ -73,7 +73,7 @@ public class GuestService {
                 guestRepository.deleteById(guestId);
         }
 
-        public void cancelReservation(Long voucherNumber) {
+        public void cancelReservation(String voucherNumber) {
                 boolean exists = guestRepository.existsByVoucherNumber(voucherNumber);
                 if (!exists) {
                         throw new EntityNotFoundException(
@@ -84,6 +84,48 @@ public class GuestService {
 
                 guestRepository.deleteAll(guests);
 
+        }
+
+        public List<Guest> updateReservation(String voucherNumber, GuestCreationRequest request) {
+                List<Guest> currentGuests = guestRepository.findByVoucherNumber(voucherNumber);
+                if (currentGuests.isEmpty()) {
+                        throw new EntityNotFoundException("Reservation with voucher " + voucherNumber + " could not be found.");
+                }
+
+                Room newRoom = roomRepository.findById(request.getRoomId())
+                                .orElseThrow(() -> new EntityNotFoundException("Room cannot be found"));
+
+                if (newRoom.getMaxCapacity() < request.getGuests().size()) {
+                        throw new IllegalArgumentException("The room's maximum capacity is " + newRoom.getMaxCapacity() + ", but " + request.getGuests().size() + " guests were requested.");
+                }
+
+                // Check availability (ignoring this voucher's own bookings)
+                boolean isAvailable = newRoom.getGuests().stream()
+                                .filter(guest -> !guest.getVoucherNumber().equals(voucherNumber))
+                                .noneMatch(guest -> guest.getCheckOutDate().isAfter(request.getCheckInDate())
+                                                && guest.getCheckInDate().isBefore(request.getCheckOutDate()));
+
+                if (!isAvailable) {
+                        throw new IllegalArgumentException("The room is not available between these dates");
+                }
+
+                // Delete old guests and insert new ones
+                guestRepository.deleteAll(currentGuests);
+
+                List<Guest> guestsToSave = new ArrayList<>();
+                for (GuestDto guestDto : request.getGuests()) {
+                        Guest guest = Guest.builder()
+                                        .firstname(guestDto.getFirstname())
+                                        .lastname(guestDto.getLastname())
+                                        .voucherNumber(voucherNumber)
+                                        .room(newRoom)
+                                        .checkInDate(request.getCheckInDate())
+                                        .checkOutDate(request.getCheckOutDate())
+                                        .build();
+                        guestsToSave.add(guest);
+                }
+
+                return guestRepository.saveAll(guestsToSave);
         }
 
         public List<Guest> searchAndSortGuests(String lastname, String voucherNumber, String sortBy, String direction) {

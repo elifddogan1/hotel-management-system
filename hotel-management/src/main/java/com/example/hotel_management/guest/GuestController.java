@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,7 +66,13 @@ public class GuestController {
     // 7. Voucher Numarasına Göre Toplu Rezervasyon İptali
     @DeleteMapping("/cancel-reservation/{voucherNumber}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelReservation(@PathVariable Long voucherNumber) {
+    public void cancelReservation(@PathVariable String voucherNumber) {
         guestService.cancelReservation(voucherNumber);
+    }
+
+    // 8. Rezervasyon Güncelleme
+    @PutMapping("/reservation/{voucherNumber}")
+    public List<Guest> updateReservation(@PathVariable String voucherNumber, @RequestBody GuestCreationRequest request) {
+        return guestService.updateReservation(voucherNumber, request);
     }
 }
