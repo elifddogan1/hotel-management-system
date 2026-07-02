@@ -38,4 +38,12 @@ public class HotelService {
         }
         hotelRepository.deleteById(id);
     }
+
+    public Hotel updateHotel(Long id, HotelCreationRequest request) {
+        Hotel hotel = getHotelById(id);
+        hotel.setName(request.getName());
+        hotel.setLocation(request.getLocation());
+        hotel.setContactInfo(request.getContactInfo());
+        return hotelRepository.save(hotel);
+    }
 }
