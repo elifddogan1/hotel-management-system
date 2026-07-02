@@ -22,6 +22,18 @@ public class GuestService {
         private final GuestRepository guestRepository;
         private final RoomRepository roomRepository;
 
+        public List<Guest> getAllGuests() {
+                return guestRepository.findAll();
+        }
+
+        public List<Guest> getGuestsByHotelId(Long hotelId) {
+                return guestRepository.findByRoomHotelId(hotelId);
+        }
+
+        public List<Guest> getGuestsByRoomId(Long roomId) {
+                return guestRepository.findByRoomId(roomId);
+        }
+
         public List<Guest> createGuest(GuestCreationRequest request) {
                 Room room = roomRepository.findById(request.getRoomId())
                                 .orElseThrow(() -> new EntityNotFoundException("Room cannot be found"));
@@ -76,7 +88,7 @@ public class GuestService {
 
         public List<Guest> searchAndSortGuests(String lastname, String voucherNumber, String sortBy, String direction) {
                 Specification<Guest> spec = (root, query, cb) -> cb.conjunction();
-                if (lastname != null || !lastname.trim().isEmpty()) {
+                if (lastname != null && !lastname.trim().isEmpty()) {
                         spec = spec.and(GuestSpecification.lastnameFiltering(lastname));
                 }
                 if (voucherNumber != null && !voucherNumber.trim().isEmpty()) {
