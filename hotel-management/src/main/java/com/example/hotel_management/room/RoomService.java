@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.example.hotel_management.guest.Guest;
 import com.example.hotel_management.hotel.Hotel;
 import com.example.hotel_management.hotel.HotelRepository;
 import com.example.hotel_management.room.request.RoomCreationRequest;
@@ -90,6 +91,36 @@ public class RoomService {
 
         return roomsWithOptimalDate;
 
+    }
+
+    public Room updateRoom(Long roomId, RoomCreationRequest request) {
+        Room room = getRoomById(roomId);
+
+        // check if room number already exists in same hotel, excluding current room
+        if (!room.getRoomNumber().equals(request.getRoomNumber())) {
+            if (roomRepository.existsByRoomNumberAndHotelId(request.getRoomNumber(), room.getHotel().getId())) {
+                throw new IllegalArgumentException("This room already exists in this hotel.");
+            }
+        }
+
+        // capacity check
+        if (request.getMaxCapacity() < room.getGuests().size()) {
+            java.util.Map<String, Long> guestsPerVoucher = room.getGuests().stream()
+                    .collect(java.util.stream.Collectors.groupingBy(Guest::getVoucherNumber,
+                            java.util.stream.Collectors.counting()));
+            for (java.util.Map.Entry<String, Long> entry : guestsPerVoucher.entrySet()) {
+                if (entry.getValue() > request.getMaxCapacity()) {
+                    throw new IllegalArgumentException(
+                            "Cannot reduce capacity below the number of guests in an existing booking ("
+                                    + entry.getValue() + " guests).");
+                }
+            }
+        }
+
+        room.setRoomNumber(request.getRoomNumber());
+        room.setRoomType(request.getRoomType());
+        room.setMaxCapacity(request.getMaxCapacity());
+        return roomRepository.save(room);
     }
 
 }
