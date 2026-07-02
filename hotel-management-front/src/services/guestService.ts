@@ -66,5 +66,11 @@ export const guestService = {
     // Tüm rezervasyonu (Voucher) iptal et
     cancelReservation: async (voucherNumber: string): Promise<void> => {
         await api.delete(`/guest/cancel-reservation/${voucherNumber}`);
+    },
+
+    // Rezervasyonu (Voucher) güncelle
+    updateReservation: async (voucherNumber: string, request: GuestCreationRequest): Promise<Guest[]> => {
+        const response = await api.put<Guest[]>(`/guest/reservation/${voucherNumber}`, request);
+        return response.data;
     }
 };

@@ -63,5 +63,10 @@ export const roomService = {
 
     deleteRoom: async (id: number): Promise<void> => {
         await api.delete(`/rooms/${id}`);
+    },
+
+    updateRoom: async (id: number, room: RoomCreationRequest): Promise<Room> => {
+        const response = await api.put<Room>(`/rooms/${id}`, room);
+        return response.data;
     }
 };

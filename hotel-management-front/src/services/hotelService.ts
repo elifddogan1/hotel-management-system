@@ -30,5 +30,11 @@ export const hotelService = {
     // Otel sil (DELETE)
     deleteHotel: async (id: number): Promise<void> => {
         await api.delete(`/hotels/${id}`);
+    },
+
+    // Otel güncelle (PUT)
+    updateHotel: async (id: number, hotel: Hotel): Promise<Hotel> => {
+        const response = await api.put<Hotel>(`/hotels/${id}`, hotel);
+        return response.data;
     }
 }
