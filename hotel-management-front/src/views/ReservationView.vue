@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { roomService, type Room, type AvailableRoomSearchParams } from '../services/roomService';
 import { hotelService, type Hotel } from '../services/hotelService';
@@ -14,7 +14,7 @@ const hotels = ref<Hotel[]>([]);
 const isLoading = ref(true);
 
 const searchParams = ref<AvailableRoomSearchParams>({
-  hotelId: undefined,
+  hotelId: undefined,   
   numberOfPerson: 2,
   checkInDate: '',
   checkOutDate: ''
@@ -65,8 +65,26 @@ const selectRoomForBooking = (room: Room) => {
   };
 };
 
-const addGuestField = () => newReservation.value.guests.push({ firstname: '', lastname: '' });
-const removeGuestField = (index: number) => newReservation.value.guests.splice(index, 1);
+const isDirectBooking = computed(() => !!route.query.roomId);
+
+const selectedHotel = computed(() => {
+  if (!route.query.hotelId || hotels.value.length === 0) return null;
+  return hotels.value.find(h => h.id === Number(route.query.hotelId)) || null;
+});
+
+const addGuestField = () => {
+  newReservation.value.guests.push({ firstname: '', lastname: '' });
+  if (isDirectBooking.value) {
+    searchParams.value.numberOfPerson = newReservation.value.guests.length;
+  }
+};
+
+const removeGuestField = (index: number) => {
+  newReservation.value.guests.splice(index, 1);
+  if (isDirectBooking.value) {
+    searchParams.value.numberOfPerson = newReservation.value.guests.length;
+  }
+};
 
 const submitReservation = async () => {
   try {
@@ -78,11 +96,42 @@ const submitReservation = async () => {
   }
 };
 
-onMounted(() => {
-  loadAllData();
+// Keep guests array in sync with numberOfPerson
+watch(() => searchParams.value.numberOfPerson, (newVal) => {
+  if (isDirectBooking.value && newVal && newVal > 0) {
+    const currentLength = newReservation.value.guests.length;
+    if (newVal > currentLength) {
+      for (let i = currentLength; i < newVal; i++) {
+        newReservation.value.guests.push({ firstname: '', lastname: '' });
+      }
+    } else if (newVal < currentLength) {
+      newReservation.value.guests.splice(newVal);
+    }
+  }
+});
+
+onMounted(async () => {
+  await loadAllData();
   // RoomDetail'den gelindiyse otel bilgisini otomatik filtreye ekle
   if (route.query.hotelId) {
     searchParams.value.hotelId = Number(route.query.hotelId);
+  }
+  if (route.query.roomId && route.query.hotelId) {
+    try {
+      const allRooms = await roomService.getRoomsByHotelId(Number(route.query.hotelId));
+      const room = allRooms.find(r => r.id === Number(route.query.roomId));
+      if (room) {
+        selectedRoom.value = room;
+        newReservation.value.roomId = room.id!;
+        newReservation.value.voucherNumber = 'VCH-' + Date.now().toString().slice(-6);
+        newReservation.value.guests = Array.from(
+          { length: searchParams.value.numberOfPerson },
+          () => ({ firstname: '', lastname: '' })
+        );
+      }
+    } catch (error) {
+      console.error("Direct room loading error:", error);
+    }
   }
 });
 </script>
@@ -100,8 +149,8 @@ onMounted(() => {
       </header>
 
       <div class="grid-layout" :class="{ 'single-col': !selectedRoom }">
-        <!-- SOL: ARAMA VE LİSTE -->
-        <div class="left-col fade-in">
+        <!-- SOL: ARAMA VE LİSTE (Normal Rezervasyon Akışı) -->
+        <div v-if="!isDirectBooking" class="left-col fade-in">
           
           <!-- ADIM 1: TARİH VE ARAMA -->
           <section class="glass-card mb-24">
@@ -184,6 +233,62 @@ onMounted(() => {
           </section>
         </div>
 
+        <!-- SOL: DİREKT ODA BİLGİSİ VE TARİH SEÇİMİ (Detay Sayfasından Gelindiğinde) -->
+        <div v-else class="left-col fade-in">
+          <!-- ODA VE OTEL DETAYI -->
+          <section class="glass-card mb-24">
+            <div class="section-header">
+              <div class="icon-box blue-box"><Building2 :size="24" /></div>
+              <h2>Oda ve Otel Bilgisi</h2>
+            </div>
+            
+            <div class="room-direct-info">
+              <h3 class="hotel-title" v-if="selectedHotel">
+                <Building2 :size="18" class="text-slate" />
+                {{ selectedHotel.name }}
+              </h3>
+              <div class="room-details-box mt-10" v-if="selectedRoom">
+                <div class="room-main">
+                  <BedDouble :size="22" class="text-sky" />
+                  <span class="room-number">Oda {{ selectedRoom.roomNumber }}</span>
+                  <span class="badge blue-badge">{{ selectedRoom.roomType }}</span>
+                </div>
+                <div class="room-capacity mt-10">
+                  <Users :size="16" class="text-slate" />
+                  <span>Maksimum Kapasite: <strong>{{ selectedRoom.maxCapacity }} Kişi</strong></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- TARİH SEÇİMİ -->
+          <section class="glass-card">
+            <div class="section-header">
+              <div class="icon-box blue-box"><CalendarPlus :size="24" /></div>
+              <h2>Rezervasyon Tarihleri</h2>
+            </div>
+            
+            <div class="search-form">
+              <div class="flex-row">
+                <div class="form-group half">
+                  <label>Giriş Tarihi <span class="required">*</span></label>
+                  <input v-model="newReservation.checkInDate" type="date" required />
+                </div>
+                <div class="form-group half">
+                  <label>Çıkış Tarihi <span class="required">*</span></label>
+                  <input v-model="newReservation.checkOutDate" type="date" required />
+                </div>
+              </div>
+              <div class="flex-row mt-10">
+                <div class="form-group half">
+                  <label>Kişi Sayısı <span class="required">*</span></label>
+                  <input v-model.number="searchParams.numberOfPerson" type="number" min="1" :max="selectedRoom?.maxCapacity || 10" required />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
         <!-- SAĞ: MİSAFİR BİLGİLERİ -->
         <div class="right-col fade-in" v-if="selectedRoom">
           <section class="glass-card sticky-card">
@@ -200,7 +305,13 @@ onMounted(() => {
               <div class="summary-divider"></div>
               <div class="summary-item">
                 <span class="summary-label">Konaklama Tarihi</span>
-                <span class="summary-value">{{ searchParams.checkInDate }} ➔ {{ searchParams.checkOutDate }}</span>
+                <span class="summary-value" v-if="newReservation.checkInDate && newReservation.checkOutDate">
+                  {{ newReservation.checkInDate }} ➔ {{ newReservation.checkOutDate }}
+                </span>
+                <span class="summary-value" v-else-if="searchParams.checkInDate && searchParams.checkOutDate">
+                  {{ searchParams.checkInDate }} ➔ {{ searchParams.checkOutDate }}
+                </span>
+                <span class="summary-value text-slate" v-else>Tarih seçilmedi</span>
               </div>
             </div>
             
@@ -390,6 +501,47 @@ input:focus, select:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Oda ve Otel Bilgisi (Direkt Rezervasyon) */
+.room-direct-info {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+.hotel-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px 0;
+}
+.room-details-box {
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.room-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.room-number {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.room-capacity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #475569;
+  margin-top: 10px;
+}
 
 /* Mobil Uyumluluk */
 @media (max-width: 900px) { 
