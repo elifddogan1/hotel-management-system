@@ -24,6 +24,13 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/agency_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: secret_password
+  frontend:
+    build: ./hotel-management-front
+    container_name: hotel_frontend_app
+    ports:
+      - "5173:80" # Artık tarayıcıdan http://localhost:5173 ile girebilirsin
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
