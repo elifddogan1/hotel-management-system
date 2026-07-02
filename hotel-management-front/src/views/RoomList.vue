@@ -3,16 +3,15 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { roomService, type Room } from '../services/roomService';
 import { hotelService, type Hotel } from '../services/hotelService';
-// Profesyonel ikonları dahil ediyoruz
-import { Filter, Building2, Users, BedDouble, ChevronRight, Loader2, SearchX } from 'lucide-vue-next';
+// Profesyonel ikonlarımızı ekledik
+import { Search, Building2, Users, BedDouble, ChevronRight, Loader2, SearchX } from 'lucide-vue-next';
 
 const router = useRouter();
 const rooms = ref<Room[]>([]);
 const hotels = ref<Hotel[]>([]);
 const isLoading = ref(true);
 
-// Filtre Stateleri
-const filterHotelId = ref<number | ''>('');
+// Filtre stateleri
 const filterCapacity = ref<number | ''>('');
 const filterType = ref<string>('');
 
@@ -36,18 +35,17 @@ const getHotelName = (hotelId: number) => {
   return hotels.value.find(h => h.id === hotelId)?.name || 'Bilinmeyen Otel';
 };
 
+// Frontend üzerinde anlık filtreleme
 const filteredRooms = computed(() => {
   return rooms.value.filter(room => {
-    const matchHotel = filterHotelId.value === '' || room.hotelId === filterHotelId.value;
     const matchCapacity = filterCapacity.value === '' || room.maxCapacity >= Number(filterCapacity.value);
     const matchType = filterType.value === '' || room.roomType.toLowerCase().includes(filterType.value.toLowerCase());
-    
-    return matchHotel && matchCapacity && matchType;
+    return matchCapacity && matchType;
   });
 });
 
 const goToDetail = (room: Room) => {
-  router.push({ name: 'room-detail', params: { hotelId: room.hotelId, roomId: room.id } });
+  router.push({ name: 'RoomDetail', params: { hotelId: room.hotelId, roomId: room.id } });
 };
 
 onMounted(() => {
@@ -67,38 +65,21 @@ onMounted(() => {
         <p class="subtitle">Sistemdeki tüm odaları filtreleyin ve detaylarını inceleyin.</p>
       </header>
 
-      <!-- Filtreleme Alanı -->
+      <!-- Arama ve Filtreleme Alanı -->
       <div class="filter-bar glass-card">
         <div class="filter-header">
-          <Filter :size="20" class="text-sky" />
-          <h2>Arama & Filtreleme</h2>
+          <Search :size="20" class="text-sky" />
+          <h2>Hızlı Arama</h2>
         </div>
         
         <div class="filter-grid">
           <div class="form-group">
-            <label>Otel Seçimi</label>
-            <select v-model="filterHotelId">
-              <option value="">Tüm Oteller</option>
-              <option v-for="hotel in hotels" :key="hotel.id" :value="hotel.id">
-                {{ hotel.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
             <label>Minimum Kapasite</label>
             <input v-model="filterCapacity" type="number" min="1" placeholder="Örn: 2 Kişilik" />
           </div>
-
           <div class="form-group">
             <label>Oda Tipi</label>
-            <select v-model="filterType">
-              <option value="">Tüm Tipler</option>
-              <option value="standard">Standard</option>
-              <option value="deluxe">Deluxe</option>
-              <option value="family">Family</option>
-              <option value="suite">Suite</option>
-            </select>
+            <input v-model="filterType" type="text" placeholder="Örn: Suite, Standard, Family..." />
           </div>
         </div>
       </div>
@@ -106,14 +87,14 @@ onMounted(() => {
       <!-- Yükleniyor Durumu -->
       <div v-if="isLoading" class="state-container">
         <Loader2 class="spinner-icon" :size="48" />
-        <p>Odalar ve otel bilgileri yükleniyor...</p>
+        <p>Oda rehberi güncelleniyor...</p>
       </div>
 
       <!-- Filtre Sonucu Boşsa -->
-      <div v-else-if="filteredRooms.length === 0" class="state-container glass-card">
+      <div v-else-if="filteredRooms.length === 0" class="state-container glass-card fade-in">
         <SearchX :size="48" class="empty-icon" />
-        <p class="empty-text">Bu kriterlere uygun oda bulunamadı.</p>
-        <button @click="filterHotelId=''; filterCapacity=''; filterType=''" class="btn-clear">
+        <p class="empty-text">Aradığınız kriterlere uygun oda bulunamadı.</p>
+        <button @click="filterCapacity=''; filterType=''" class="btn-clear">
           Filtreleri Temizle
         </button>
       </div>
@@ -146,7 +127,7 @@ onMounted(() => {
           </div>
           
           <div class="card-footer">
-            <span class="click-hint">Paneli Aç</span>
+            <span class="click-hint">Detayları Gör</span>
             <ChevronRight :size="18" class="hint-icon" />
           </div>
         </div>
@@ -173,7 +154,7 @@ onMounted(() => {
 .shape-2 { bottom: 10%; right: -5%; width: 450px; height: 450px; background: #10b981; animation-delay: -3s; }
 @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(20px, 30px) scale(1.05); } }
 
-.content-wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+.content-wrapper { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; }
 
 /* Başlık */
 .header { text-align: center; margin-bottom: 40px; animation: fadeInDown 0.5s ease-out; }
@@ -200,14 +181,15 @@ onMounted(() => {
 .form-group { display: flex; flex-direction: column; }
 label { margin-bottom: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
 
-input, select { 
+input { 
   width: 100%; padding: 12px 15px; background: #ffffff; border: 1px solid #cbd5e1; 
   border-radius: 10px; color: #1e293b; font-size: 1rem; transition: all 0.3s; box-sizing: border-box; outline: none; 
 }
-input:focus, select:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+input::placeholder { color: #94a3b8; }
 
 /* Oda Kartları Grid */
-.list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 
 .item-card { 
   background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; 
