@@ -44,6 +44,7 @@ Sistemi yerel ortamınızda ayağa kaldırmak için bilgisayarınızda yalnızca
 Terminalinizi açın ve depoyu yerel bilgisayarınıza indirin:
 
 git clone <repo linki>
+
 cd hotel
 
 ### 2. Konteynerleri İnşa Etme ve Başlatma
