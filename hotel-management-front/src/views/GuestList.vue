@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { guestService, type Guest, type GuestSearchParams } from '../services/guestService';
-// Profesyonel ikonlarımızı ekledik
+// Profesyonel ve canlı tasarımlar için ikon setimizi dahil ettik
 import { Users, Filter, Ticket, BedDouble, Calendar, TicketX, Loader2, SearchX, ArrowUpDown } from 'lucide-vue-next';
 
 const guests = ref<Guest[]>([]);
@@ -37,21 +37,21 @@ onMounted(() => {
 
 <template>
   <div class="dashboard-layout">
-    <!-- Arka plan dekoratif elementleri -->
+    <!-- Cam efektinin arkasında parlayan yumuşak renkli geometrik şekiller -->
     <div class="bg-shape shape-1"></div>
     <div class="bg-shape shape-2"></div>
 
     <div class="content-wrapper">
       <header class="header">
         <h1>Misafir & Rezervasyon Yönetimi</h1>
-        <p class="subtitle">Sistemdeki tüm konaklama kayıtlarını listeleyin, arayın ve iptal işlemlerini yönetin.</p>
+        <p class="subtitle">Sistemdeki aktif konaklama kayıtlarını listeleyin, arayın ve rezervasyon iptallerini yönetin.</p>
       </header>
 
       <!-- FİLTRELEME VE ARAMA PANELİ -->
       <section class="glass-card top-bar">
         <div class="filter-header">
           <Filter :size="20" class="text-sky" />
-          <h2>Arama Seçenekleri & Sıralama</h2>
+          <h2>Gelişmiş Filtreleme ve Sıralama</h2>
         </div>
         
         <div class="search-bar">
@@ -80,21 +80,21 @@ onMounted(() => {
         </div>
       </section>
 
-      <!-- MİSAFİR LİSTESİ ALANI -->
+      <!-- MİSAFİR LİSTESİ -->
       <section class="list-section">
-        <!-- Yükleniyor Durumu -->
+        <!-- Yükleniyor Animasyonu (Spinner) -->
         <div v-if="isLoading" class="state-container glass-card">
           <Loader2 class="spinner-icon" :size="48" />
-          <p>Misafir listesi ve rezervasyonlar güncelleniyor...</p>
+          <p>Rezervasyon kayıtları güncelleniyor...</p>
         </div>
         
-        <!-- Boş Sonuç Durumu -->
+        <!-- Boş Sonuç Ekranı -->
         <div v-else-if="guests.length === 0" class="state-container glass-card fade-in">
           <SearchX :size="48" class="empty-icon" />
           <p class="empty-text">Aradığınız kriterlere uygun herhangi bir misafir kaydı bulunamadı.</p>
         </div>
 
-        <!-- Kart Listesi Grid -->
+        <!-- Kart Listesi Grid Yapısı -->
         <div v-else class="list-grid fade-in">
           <div v-for="guest in guests" :key="guest.id" class="item-card">
             <div class="card-info">
@@ -115,7 +115,7 @@ onMounted(() => {
                 </p>
                 <p class="meta">
                   <Calendar :size="16" class="meta-icon" /> 
-                  <span>Konaklama: <strong>{{ guest.checkInDate }} ➔ {{ guest.checkOutDate }}</strong></span>
+                  <span>Konaklama Süresi: <strong>{{ guest.checkInDate }} ➔ {{ guest.checkOutDate }}</strong></span>
                 </p>
               </div>
             </div>
@@ -134,10 +134,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Genel Yerleşim ve Kırık Beyaz Arka Plan */
+/* Genel Arka Plan ve Düzen */
 .dashboard-layout { 
   min-height: 100vh; 
-  background-color: #f8fafc; 
+  background-color: #f8fafc; /* Profesyonel kırık beyaz */
   position: relative;
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, sans-serif; 
@@ -145,7 +145,7 @@ onMounted(() => {
   padding: 40px 20px; 
 }
 
-/* Arka Plan Efektleri */
+/* Canlı Parlama Efektleri (Buzlu Cam Arkası) */
 .bg-shape { position: absolute; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.3; animation: float 10s infinite ease-in-out alternate; }
 .shape-1 { top: -5%; left: -5%; width: 450px; height: 450px; background: #38bdf8; }
 .shape-2 { bottom: -10%; right: 10%; width: 450px; height: 450px; background: #fb7185; animation-delay: -4s; }
@@ -153,7 +153,7 @@ onMounted(() => {
 
 .content-wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
 
-/* Başlık */
+/* Başlık Alanı */
 .header { text-align: center; margin-bottom: 40px; animation: fadeInDown 0.5s ease-out; }
 .header h1 { font-size: 2.4rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; letter-spacing: -0.5px; }
 .subtitle { color: #64748b; font-size: 1.1rem; max-width: 700px; margin: 0 auto; }
@@ -166,12 +166,12 @@ onMounted(() => {
   border-radius: 20px; 
   padding: 24px; 
 }
-.top-bar { margin-bottom: 30px; }
+.top-bar { margin-bottom: 30px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05); }
 .filter-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
 .filter-header h2 { font-size: 1.15rem; font-weight: 700; color: #0f172a; margin: 0; }
 .text-sky { color: #0ea5e9; }
 
-/* Arama Çubuğu Grid */
+/* Arama Çubuğu Yapısı */
 .search-bar { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
 .input-group { flex: 1; min-width: 180px; }
 
@@ -194,11 +194,11 @@ input::placeholder { color: #94a3b8; }
 .btn-danger { 
   display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
   background: #fff1f2; border: 1px solid #fecdd3; color: #e11d48; 
-  padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; 
+  padding: 11px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; 
 }
 .btn-danger:hover { background: #e11d48; color: white; border-color: #e11d48; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15); }
 
-/* Listeleme Izgarası (Grid) */
+/* Misafir Kartları Grid Yapısı */
 .list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; }
 
 .item-card { 
@@ -208,7 +208,7 @@ input::placeholder { color: #94a3b8; }
 }
 .item-card:hover { border-color: #bae6fd; transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.06); }
 
-/* Kart Detayları */
+/* Kart Detay İçerikleri */
 .guest-name-row { display: flex; align-items: center; gap: 12px; }
 .avatar-icon { background: #f1f5f9; color: #475569; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .item-card h3 { font-size: 1.3rem; font-weight: 700; color: #0f172a; margin: 0; }
@@ -221,19 +221,19 @@ input::placeholder { color: #94a3b8; }
 .meta-icon { color: #94a3b8; }
 .meta strong { color: #0f172a; }
 
-/* Durum Bildirimleri */
+/* Yükleniyor ve Boş Liste Alanları */
 .state-container { text-align: center; padding: 60px 20px; color: #64748b; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .spinner-icon { animation: spin 1s linear infinite; margin-bottom: 15px; color: #0ea5e9; }
 .empty-icon { color: #cbd5e1; margin-bottom: 15px; }
 .empty-text { font-size: 1.1rem; color: #475569; font-weight: 500; }
 
-/* Animasyonlar */
+/* Animasyon Geçişleri */
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Mobil Uyum */
+/* Mobil Uyumluluk */
 @media (max-width: 600px) { 
   .search-bar { flex-direction: column; align-items: stretch; }
   .input-group { width: 100%; }
