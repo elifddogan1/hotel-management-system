@@ -18,6 +18,7 @@ public class HotelService {
         Hotel hotel = Hotel.builder()
                 .name(request.getName())
                 .location(request.getLocation())
+                .contactInfo(request.getContactInfo())
                 .build();
         return hotelRepository.save(hotel);
     }

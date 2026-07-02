@@ -15,4 +15,5 @@ import lombok.Setter;
 public class HotelCreationRequest {
     String name;
     String location;
+    String contactInfo;
 }
