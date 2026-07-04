@@ -55,7 +55,7 @@ jobs:
           script: |
             # 1. Sunucuda projenin ve docker-compose.yml dosyanın olduğu klasöre git
             # Buradaki '/home/ubuntu/projenin-klasor-adi' yolunu sunucundaki gerçek yolla değiştir!
-            cd /home/${{ secrets.SERVER_USER }}/projenin-klasor-adi
+            cd /home/${{ secrets.SERVER_USER }}/hotel-management-system
             
             # 2. Docker Hub'a sunucudan da giriş yap (imajları çekebilmek için)
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
