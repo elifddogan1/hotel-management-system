@@ -14,6 +14,7 @@ services:
 
   # 2. Spring Boot Backend Servisimiz
   backend:
+    image: elifddogan1/spring-backend:latest
     build: ./hotel-management # 🔥 './backend' yerine tam klasör adını yazdık!
     container_name: hotel_backend_api
     ports:
@@ -25,6 +26,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: secret_password
   frontend:
+    image: elifddogan1/vue-frontend:latest
     build: ./hotel-management-front
     container_name: hotel_frontend_app
     ports:
