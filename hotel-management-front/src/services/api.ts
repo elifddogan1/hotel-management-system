@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://hotelmanagement.duckdns.org/api', // Dockerized Backend URL'imiz
+    baseURL: 'https://hotelmanagement.duckdns.org/api', // HTTPS olarak güncelledik
     headers: {
         'Content-Type': 'application/json',
     },
