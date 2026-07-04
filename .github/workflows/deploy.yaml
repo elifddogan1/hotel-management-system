@@ -6,7 +6,6 @@ on:
       - main
 
 jobs:
-  # 1. AŞAMA: Docker İmajlarını Derleme ve Docker Hub'a Gönderme
   build-and-push:
     runs-on: ubuntu-latest
     
@@ -14,13 +13,12 @@ jobs:
       - name: Kodları GitHub'dan Çek
         uses: actions/checkout@v4
 
-      - name: Docker Buildx Kurulumu (Gelişmiş Derleme Aracı)
+      - name: Docker Buildx Kurulumu
         uses: docker/setup-buildx-action@v3
 
       - name: Docker Hub'a Giriş Yap
         uses: docker/login-action@v3
         with:
-          # Docker Hub kullanıcı adını ve token'ını secrets alanına eklemiş olman gerekir
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -40,10 +38,9 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/vue-frontend:latest
 
-  # 2. AŞAMA: Google Cloud Sunucusuna Bağlanıp Canlıya Alma
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-push # Önce build aşamasının hatasız bitmesini şart koşar
+    needs: build-and-push
     
     steps:
       - name: Sunucuya SSH ile Bağlan ve Docker Compose Çalıştır
@@ -53,19 +50,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Sunucuda projenin ve docker-compose.yml dosyanın olduğu klasöre git
-            # Buradaki '/home/ubuntu/projenin-klasor-adi' yolunu sunucundaki gerçek yolla değiştir!
             cd /home/${{ secrets.SERVER_USER }}/hotel-management-system
-            
-            # 2. Docker Hub'a sunucudan da giriş yap (imajları çekebilmek için)
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-            
-            # 3. Docker Hub'daki en güncel imajları sunucuya çek
             docker compose pull
-            
-            # 4. Eski konteynerleri kapat ve yenilerini arka planda ayağa kaldır
             docker compose down
             docker compose up -d
-            
-            # 5. Sunucunun diskinde yer kaplayan eski/artık imajları temizle
             docker image prune -f
