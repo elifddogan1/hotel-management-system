@@ -53,10 +53,12 @@ export const guestService = {
     },
 
     // Filtreleme ve sıralama ile misafirleri getir
+    // Filtreleme ve sıralama ile misafirleri getir
     getGuests: async (params?: GuestSearchParams): Promise<Guest[]> => {
-        const response = await api.get<Guest[]>('/guest', { params });
+        const response = await api.get<Guest[]>('/guest/search', { params }); // /guest yerine /guest/search yapıldı
         return response.data;
     },
+
 
     // Tek bir misafiri sil
     deleteGuest: async (guestId: number): Promise<void> => {
