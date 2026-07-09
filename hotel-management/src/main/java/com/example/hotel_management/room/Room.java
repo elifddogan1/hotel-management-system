@@ -1,9 +1,14 @@
 package com.example.hotel_management.room;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-import com.example.hotel_management.hotel.Hotel;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import com.example.hotel_management.guest.Guest;
+import com.example.hotel_management.hotel.Hotel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -19,7 +24,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "rooms")
@@ -28,6 +32,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE rooms SET deleted = true, deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted = false")
 public class Room {
 
     @Id
@@ -40,6 +46,11 @@ public class Room {
 
     private Integer maxCapacity;
 
+    @Builder.Default
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
     @ManyToOne
     @JoinColumn(name = "hotel_id", nullable = false)
     @JsonIgnore
@@ -48,9 +59,5 @@ public class Room {
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Guest> guests;
-
-    // public Long getHotelId() {
-    // return hotel != null ? hotel.getId() : null;
-    // }
 
 }
