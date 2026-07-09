@@ -1,7 +1,6 @@
 import api from './api';
-import type { Room } from './roomService'; // Room tipini yeniden kullanıyoruz
+import type { Room } from './roomService';
 
-// 1. Backend DTO ve Entity Tipleri
 export interface GuestDto {
     firstname: string;
     lastname: string;
@@ -22,7 +21,7 @@ export interface Guest {
     voucherNumber: string;
     checkInDate: string;
     checkOutDate: string;
-    room?: Room; // Backend'den room objesi join edilip geliyorsa
+    room?: Room;
 }
 
 export interface GuestSearchParams {
@@ -32,7 +31,6 @@ export interface GuestSearchParams {
     direction?: 'asc' | 'desc';
 }
 
-// 2. Servis Fonksiyonları
 export const guestService = {
     getGuestsByHotelId: async (hotelId: number): Promise<Guest[]> => {
         const response = await api.get<Guest[]>(`/guest/hotel/${hotelId}`);
@@ -52,25 +50,18 @@ export const guestService = {
         return response.data;
     },
 
-    // Filtreleme ve sıralama ile misafirleri getir
-    // Filtreleme ve sıralama ile misafirleri getir
+
     getGuests: async (params?: GuestSearchParams): Promise<Guest[]> => {
-        const response = await api.get<Guest[]>('/guest/search', { params }); // /guest yerine /guest/search yapıldı
+        const response = await api.get<Guest[]>('/guest/search', { params });
         return response.data;
     },
-
-
-    // Tek bir misafiri sil
     deleteGuest: async (guestId: number): Promise<void> => {
         await api.delete(`/guest/${guestId}`);
     },
 
-    // Tüm rezervasyonu (Voucher) iptal et
     cancelReservation: async (voucherNumber: string): Promise<void> => {
         await api.delete(`/guest/cancel-reservation/${voucherNumber}`);
     },
-
-    // Rezervasyonu (Voucher) güncelle
     updateReservation: async (voucherNumber: string, request: GuestCreationRequest): Promise<Guest[]> => {
         const response = await api.put<Guest[]>(`/guest/reservation/${voucherNumber}`, request);
         return response.data;
