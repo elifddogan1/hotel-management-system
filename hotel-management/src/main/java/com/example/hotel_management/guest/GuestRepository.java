@@ -18,10 +18,13 @@ public interface GuestRepository extends JpaRepository<Guest, Long>, JpaSpecific
     @Query("SELECT g FROM Guest g WHERE g.room.hotel.id = :hotelId")
     List<Guest> findByRoomHotelId(@Param("hotelId") Long hotelId);
 
-    // 🔥 Odaya göre misafirleri garanti altına alan JPQL sorgusu
     @Query("SELECT g FROM Guest g WHERE g.room.id = :roomId")
     List<Guest> findByRoomId(@Param("roomId") Long roomId);
 
     List<Guest> findByRoomIdOrderByCheckInDateAsc(Long roomId);
+
+    List<Guest> findByRoom_Hotel_Id(Long hotelId);
+
+    List<Guest> findByRoom_Id(Long roomId);
 
 }
