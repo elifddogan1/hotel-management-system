@@ -2,49 +2,60 @@ package com.example.hotel_management.room;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.example.hotel_management.common.PagedResponse;
 import com.example.hotel_management.guest.Guest;
 import com.example.hotel_management.hotel.Hotel;
 import com.example.hotel_management.hotel.HotelRepository;
-import com.example.hotel_management.room.request.RoomCreationRequest;
+import com.example.hotel_management.room.dto.RoomRequest;
+import com.example.hotel_management.room.dto.RoomResponse;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class RoomService {
+
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
 
-    public List<Room> getAllRooms() {
-        return roomRepository.findAll();
+    public List<RoomResponse.QueryDetail> getAllRooms() {
+        return roomRepository.findAll().stream()
+                .map(this::convertToQueryDetailResponse)
+                .toList();
     }
 
-    public List<Room> getRoomsByHotelId(Long hotelId) {
-        return roomRepository.findByHotelId(hotelId);
+    public List<RoomResponse.QueryDetail> getRoomsByHotelId(Long hotelId) {
+        return roomRepository.findByHotelId(hotelId).stream()
+                .map(this::convertToQueryDetailResponse)
+                .toList();
     }
 
-    public Room getRoomById(Long roomId) {
-        return roomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("Room with ID" + roomId + "couldn't be found"));
+    public RoomResponse.QueryDetail getRoomById(Long roomId) {
+        Room room = getRoomEntityById(roomId);
+        return convertToQueryDetailResponse(room);
     }
 
-    public Room createRoom(RoomCreationRequest request) {
-        // Sadece oda numarası kontrolü yeterli (otel zaten URL'den geldiği için
-        // güvenilir)
+    @Transactional
+    public RoomResponse.Creation createRoom(RoomRequest.Creation request) {
         if (roomRepository.existsByRoomNumberAndHotelId(request.getRoomNumber(), request.getHotelId())) {
             throw new IllegalArgumentException("This room already exists in this hotel.");
         }
 
-        // Oteli çekiyoruz (Otel id'si geçersizse EntityNotFoundException fırlatılır)
         Hotel hotel = hotelRepository.findById(request.getHotelId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Hotel with ID " + request.getHotelId() + " could not be found."));
 
-        // Odayı oluşturuyoruz
         Room room = Room.builder()
                 .roomNumber(request.getRoomNumber())
                 .roomType(request.getRoomType())
@@ -52,75 +63,142 @@ public class RoomService {
                 .hotel(hotel)
                 .build();
 
-        // Veritabanına kaydedip geri dönüyoruz
-        return roomRepository.save(room);
+        room = roomRepository.save(room);
+        return convertToCreationResponse(room);
     }
 
-    public void deleteRoom(Long roomId) {
-        if (!roomRepository.existsById(roomId))
-            throw new EntityNotFoundException("Room with ID" + roomId + "couldn't be found");
+    @Transactional
+    public RoomResponse.Creation updateRoom(Long roomId, RoomRequest.Creation request) {
+        Room room = getRoomEntityById(roomId);
 
-        roomRepository.deleteById(roomId);
-    }
-
-    public List<Room> findOptimalRoom(Long hotelId, int numberOfPerson, LocalDate checkInDate,
-            LocalDate checkOutDate) {
-        List<Room> roomsWithSufficientCapacity = roomRepository.findByHotelIdAndMaxCapacityGreaterThanEqual(
-                hotelId,
-                numberOfPerson);
-
-        List<Room> roomsWithOptimalDate = roomsWithSufficientCapacity.stream()
-                .filter(room -> room.getGuests().stream()
-                        .noneMatch(guest -> guest.getCheckOutDate().isAfter(checkInDate)
-                                && guest.getCheckInDate().isBefore(checkOutDate)))
-                .toList();
-
-        return roomsWithOptimalDate;
-    }
-
-    public List<Room> findOptimalRoomWithoutHotelFilter(int numberOfPerson, LocalDate checkInDate,
-            LocalDate checkOutDate) {
-        List<Room> roomsWithSufficientCapacity = roomRepository
-                .findByMaxCapacityGreaterThanEqual(numberOfPerson);
-
-        List<Room> roomsWithOptimalDate = roomsWithSufficientCapacity.stream()
-                .filter(room -> room.getGuests().stream()
-                        .noneMatch(guest -> guest.getCheckOutDate().isAfter(checkInDate)
-                                && guest.getCheckInDate().isBefore(checkOutDate)))
-                .toList();
-
-        return roomsWithOptimalDate;
-
-    }
-
-    public Room updateRoom(Long roomId, RoomCreationRequest request) {
-        Room room = getRoomById(roomId);
-
-        // check if room number already exists in same hotel, excluding current room
+        // Oda numarası değişiyorsa, aynı otelde başka bir oda bu numarayı kullanıyor mu kontrolü
         if (!room.getRoomNumber().equals(request.getRoomNumber())) {
-            if (roomRepository.existsByRoomNumberAndHotelId(request.getRoomNumber(), room.getHotel().getId())) {
+            if (roomRepository.existsByRoomNumberAndHotelId(request.getRoomNumber(), request.getHotelId())) {
                 throw new IllegalArgumentException("This room already exists in this hotel.");
             }
         }
 
-        // capacity check
-        if (request.getMaxCapacity() < room.getGuests().size()) {
-            java.util.Map<String, Long> guestsPerVoucher = room.getGuests().stream()
-                    .collect(java.util.stream.Collectors.groupingBy(Guest::getVoucherNumber,
-                            java.util.stream.Collectors.counting()));
-            for (java.util.Map.Entry<String, Long> entry : guestsPerVoucher.entrySet()) {
+        // Kapasite düşürülmek isteniyorsa mevcut rezervasyonları kontrol et
+        if (request.getMaxCapacity() < room.getMaxCapacity() && room.getGuests() != null) {
+            Map<String, Long> guestsPerVoucher = room.getGuests().stream()
+                    .collect(Collectors.groupingBy(Guest::getVoucherNumber, Collectors.counting()));
+            
+            for (Map.Entry<String, Long> entry : guestsPerVoucher.entrySet()) {
                 if (entry.getValue() > request.getMaxCapacity()) {
                     throw new IllegalArgumentException(
                             "Cannot reduce capacity below the number of guests in an existing booking ("
-                                    + entry.getValue() + " guests).");
+                                    + entry.getValue() + " guests in voucher " + entry.getKey() + ").");
                 }
             }
+        }
+
+        // Otel değişikliği var mı kontrol et (Opsiyonel: Eğer otel değişebiliyorsa)
+        if (!room.getHotel().getId().equals(request.getHotelId())) {
+            Hotel hotel = hotelRepository.findById(request.getHotelId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Hotel with ID " + request.getHotelId() + " could not be found."));
+            room.setHotel(hotel);
         }
 
         room.setRoomNumber(request.getRoomNumber());
         room.setRoomType(request.getRoomType());
         room.setMaxCapacity(request.getMaxCapacity());
-        return roomRepository.save(room);
+        
+        room = roomRepository.save(room);
+        return convertToCreationResponse(room);
     }
 
+    public void deleteRoom(Long roomId) {
+        if (!roomRepository.existsById(roomId)) {
+            throw new EntityNotFoundException("Room with ID " + roomId + " could not be found.");
+        }
+        roomRepository.deleteById(roomId);
+    }
+
+    public PagedResponse<RoomResponse.QueryDetail> searchAndSortRooms(RoomRequest.Search request) {
+        
+        // Not: Bu kısım için bir RoomSpecification sınıfı oluşturman gerekecek (GuestSpecification'a benzer)
+        Specification<Room> spec = Specification.where(RoomSpecification.roomNumberFiltering(request.getRoomNumber()))
+                .and(RoomSpecification.roomTypeFiltering(request.getRoomType()))
+                .and(RoomSpecification.hotelIdFiltering(request.getHotelId()));
+
+        String sortField = (request.getSortBy() != null && !request.getSortBy().trim().isEmpty())
+                ? request.getSortBy()
+                : "id";
+        Sort sort = (request.getDirection() != null && request.getDirection().equalsIgnoreCase("desc"))
+                ? Sort.by(sortField).descending()
+                : Sort.by(sortField).ascending();
+
+        int pageNum = (request.getPage() != null) ? request.getPage() : 0;
+        int pageSize = (request.getSize() != null) ? request.getSize() : 10;
+        PageRequest pageable = PageRequest.of(pageNum, pageSize, sort);
+
+        Page<Room> roomPage = roomRepository.findAll(spec, pageable);
+
+        List<RoomResponse.QueryDetail> dtoList = roomPage.getContent().stream()
+                .map(this::convertToQueryDetailResponse)
+                .toList();
+
+        return PagedResponse.<RoomResponse.QueryDetail>builder()
+                .content(dtoList)
+                .pageNo(roomPage.getNumber())
+                .pageSize(roomPage.getSize())
+                .totalElements(roomPage.getTotalElements())
+                .totalPages(roomPage.getTotalPages())
+                .last(roomPage.isLast())
+                .build();
+    }
+
+    public List<RoomResponse.QueryDetail> findOptimalRoom(Long hotelId, int numberOfPerson, LocalDate checkInDate,
+            LocalDate checkOutDate) {
+        List<Room> roomsWithSufficientCapacity = roomRepository.findByHotelIdAndMaxCapacityGreaterThanEqual(
+                hotelId, numberOfPerson);
+
+        return filterOptimalRooms(roomsWithSufficientCapacity, checkInDate, checkOutDate);
+    }
+
+    public List<RoomResponse.QueryDetail> findOptimalRoomWithoutHotelFilter(int numberOfPerson, LocalDate checkInDate,
+            LocalDate checkOutDate) {
+        List<Room> roomsWithSufficientCapacity = roomRepository
+                .findByMaxCapacityGreaterThanEqual(numberOfPerson);
+
+        return filterOptimalRooms(roomsWithSufficientCapacity, checkInDate, checkOutDate);
+    }
+
+    // --- YARDIMCI METOTLAR (HELPER METHODS) ---
+
+    private Room getRoomEntityById(Long roomId) {
+        return roomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room with ID " + roomId + " could not be found."));
+    }
+
+    private List<RoomResponse.QueryDetail> filterOptimalRooms(List<Room> rooms, LocalDate checkInDate, LocalDate checkOutDate) {
+        return rooms.stream()
+                .filter(room -> room.getGuests() == null || room.getGuests().stream()
+                        .noneMatch(guest -> guest.getCheckOutDate().isAfter(checkInDate)
+                                && guest.getCheckInDate().isBefore(checkOutDate)))
+                .map(this::convertToQueryDetailResponse)
+                .toList();
+    }
+
+    private RoomResponse.QueryDetail convertToQueryDetailResponse(Room room) {
+        return RoomResponse.QueryDetail.builder()
+                .id(room.getId())
+                .roomNumber(room.getRoomNumber())
+                .roomType(room.getRoomType())
+                .maxCapacity(room.getMaxCapacity())
+                .hotelId(room.getHotel() != null ? room.getHotel().getId() : null)
+                .hotelName(room.getHotel() != null ? room.getHotel().getName() : null)
+                .build();
+    }
+
+    private RoomResponse.Creation convertToCreationResponse(Room room) {
+        return RoomResponse.Creation.builder()
+                .id(room.getId())
+                .roomNumber(room.getRoomNumber())
+                .roomType(room.getRoomType())
+                .maxCapacity(room.getMaxCapacity())
+                .hotelId(room.getHotel() != null ? room.getHotel().getId() : null)
+                .build();
+    }
 }
