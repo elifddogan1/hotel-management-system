@@ -110,13 +110,10 @@ public class GuestControllerTest {
     @Test
     @DisplayName("Should return 400 Bad Request when search parameters are invalid")
     void getGuests_WithInvalidParams_ShouldReturn400() throws Exception {
-        // Geçersiz bir parametre gönderiyoruz (Örn: page eksi bir değer olamaz)
         mockMvc.perform(get("/api/v1/guests")
                 .param("page", "-1") 
                 .param("size", "10"))
                 .andExpect(status().isBadRequest())
-                // Fırlattığınız manuel exception mesajını kontrol edebilirsiniz
-                // reason yerine doğrudan dönen body'nin içinde arama yapabilirsin
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Validation failed")));
     }
 
