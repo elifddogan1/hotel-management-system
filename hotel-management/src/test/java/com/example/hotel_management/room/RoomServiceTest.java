@@ -246,26 +246,43 @@ class RoomServiceTest {
     @DisplayName("deleteRoom - Başarılı Senaryo: Oda mevcutsa silme işlemi tetiklenmeli")
     void deleteRoom_WhenRoomExists_ShouldDeleteSuccessfully() {
         Long roomId = 100L;
-        when(roomRepository.existsById(roomId)).thenReturn(true);
-        doNothing().when(roomRepository).deleteById(roomId);
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(savedRoom));
         assertDoesNotThrow(() -> roomService.deleteRoom(roomId));
-        verify(roomRepository, times(1)).existsById(roomId);
-        verify(roomRepository, times(1)).deleteById(roomId);
+        verify(roomRepository, times(1)).findById(roomId);
+        verify(roomRepository, times(1)).delete(savedRoom);
     }
 
     @Test
     @DisplayName("deleteRoom - Hata Senaryosu: Oda bulunamazsa EntityNotFoundException fırlatmalı")
     void deleteRoom_WhenRoomDoesNotExist_ShouldThrowEntityNotFoundException() {
         Long roomId = 999L;
-        when(roomRepository.existsById(roomId)).thenReturn(false);
+        when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             roomService.deleteRoom(roomId);
         });
 
         assertEquals("Room with ID 999 could not be found.", exception.getMessage());
-        verify(roomRepository, times(1)).existsById(roomId);
-        verify(roomRepository, never()).deleteById(anyLong());
+        verify(roomRepository, times(1)).findById(roomId);
+        verify(roomRepository, never()).delete(any(Room.class));
+    }
+
+    @Test
+    @DisplayName("deleteRoom - Hata Senaryosu: Odada aktif rezervasyon varsa IllegalArgumentException fırlatmalı")
+    void deleteRoom_WhenRoomHasGuests_ShouldThrowIllegalArgumentException() {
+        Long roomId = 100L;
+        Guest guest = Guest.builder().id(1L).firstname("John").lastname("Doe").build();
+        savedRoom.setGuests(List.of(guest));
+
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(savedRoom));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            roomService.deleteRoom(roomId);
+        });
+
+        assertEquals("Bu odaya ait aktif rezervasyonlar bulunmaktadır. Önce rezervasyonları iptal etmeli veya başka bir odaya taşımalısınız.", exception.getMessage());
+        verify(roomRepository, times(1)).findById(roomId);
+        verify(roomRepository, never()).delete(any(Room.class));
     }
 
     @Test

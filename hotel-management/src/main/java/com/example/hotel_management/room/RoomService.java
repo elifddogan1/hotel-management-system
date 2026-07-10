@@ -107,12 +107,18 @@ public class RoomService {
         return convertToCreationResponse(room);
     }
 
+    @Transactional
     public void deleteRoom(Long roomId) {
-        if (!roomRepository.existsById(roomId)) {
-            throw new EntityNotFoundException("Room with ID " + roomId + " could not be found.");
+    Room room = roomRepository.findById(roomId)
+            .orElseThrow(() -> new EntityNotFoundException("Room with ID " + roomId + " could not be found."));
+
+        if (room.getGuests() != null && !room.getGuests().isEmpty()) {
+            throw new IllegalArgumentException("Bu odaya ait aktif rezervasyonlar bulunmaktadır. Önce rezervasyonları iptal etmeli veya başka bir odaya taşımalısınız.");
         }
-        roomRepository.deleteById(roomId);
+
+        roomRepository.delete(room);
     }
+
 
     public PagedResponse<RoomResponse.QueryDetail> searchAndSortRooms(RoomRequest.Search request) {
         

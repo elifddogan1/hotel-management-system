@@ -65,10 +65,12 @@ const handleDeleteRoom = async (id: number | undefined) => {
   try {
     await roomService.deleteRoom(id);
     rooms.value = await roomService.getRoomsByHotelId(hotelId);
-  } catch (error) {
-    alert('Oda silinemedi.');
+  } catch (error: any) {
+    const errorMessage = error.response?.data || 'Oda silinirken bir hata oluştu.';
+    alert(errorMessage);
   }
 };
+
 
 const handleCancelVoucher = async (voucherNumber: string) => {
   if (!confirm(`Voucher No: ${voucherNumber} olan rezervasyonu iptal etmek istediğinize emin misiniz?`)) return;

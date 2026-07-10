@@ -38,7 +38,6 @@ public class RoomController {
         return roomService.searchAndSortRooms(search);
     }
 
-    // Sayfalama olmadan tüm odaları getirmek için
     @GetMapping("/all")
     public List<RoomResponse.QueryDetail> getAllRooms() {
         return roomService.getAllRooms();
