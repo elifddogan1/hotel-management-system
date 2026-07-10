@@ -1,6 +1,10 @@
 package com.example.hotel_management.hotel;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import com.example.hotel_management.room.Room;
 
@@ -25,7 +29,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
+@SQLDelete(sql = "UPDATE hotels SET deleted = true, deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted = false")
 public class Hotel {
 
     @Id
@@ -40,5 +45,11 @@ public class Hotel {
     private String contactInfo;
 
     @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
-    List<Room> rooms;
+    private List<Room> rooms;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
 }
