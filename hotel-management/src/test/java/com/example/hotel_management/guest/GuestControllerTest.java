@@ -55,7 +55,7 @@ public class GuestControllerTest {
 
         when(guestService.searchAndSortGuests(any(GuestRequest.Search.class))).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/guests")
+        mockMvc.perform(get("/api/v1/guests")
                 .param("firstname", "John")
                 .param("page", "0")
                 .param("size", "10"))
@@ -79,7 +79,7 @@ public class GuestControllerTest {
 
         when(guestService.searchAndSortGuests(any(GuestRequest.Search.class))).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/guests"))
+        mockMvc.perform(get("/api/v1/guests"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pageNo").value(0))
                 .andExpect(jsonPath("$.pageSize").value(10));
@@ -99,7 +99,7 @@ public class GuestControllerTest {
 
         when(guestService.searchAndSortGuests(any(GuestRequest.Search.class))).thenReturn(emptyResponse);
 
-        mockMvc.perform(get("/api/guests")
+        mockMvc.perform(get("/api/v1/guests")
                 .param("voucherNumber", "NON-EXISTING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty())
@@ -110,7 +110,7 @@ public class GuestControllerTest {
     @DisplayName("Should return 400 Bad Request when search parameters are invalid")
     void getGuests_WithInvalidParams_ShouldReturn400() throws Exception {
         // Geçersiz bir parametre gönderiyoruz (Örn: page eksi bir değer olamaz)
-        mockMvc.perform(get("/api/guests")
+        mockMvc.perform(get("/api/v1/guests")
                 .param("page", "-1") 
                 .param("size", "10"))
                 .andExpect(status().isBadRequest())
@@ -133,7 +133,7 @@ public class GuestControllerTest {
 
         when(guestService.getGuestsByHotelId(1L)).thenReturn(List.of(mockDetail));
 
-        mockMvc.perform(get("/api/guests/hotel/{hotelId}", 1L))
+        mockMvc.perform(get("/api/v1/guests/hotel/{hotelId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].firstname").value("Jane"))
                 .andExpect(jsonPath("$[0].hotelName").value("Grand Hotel"))
@@ -145,7 +145,7 @@ public class GuestControllerTest {
     void getGuestsByHotelId_WithNoGuests_ShouldReturn200AndEmptyList() throws Exception {
         when(guestService.getGuestsByHotelId(1L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/guests/hotel/{hotelId}", 1L))
+        mockMvc.perform(get("/api/v1/guests/hotel/{hotelId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -153,7 +153,7 @@ public class GuestControllerTest {
     @Test
     @DisplayName("Should return 400 Bad Request when hotelId is not a valid Long type")
     void getGuestsByHotelId_WithInvalidIdType_ShouldReturn400() throws Exception {
-        mockMvc.perform(get("/api/guests/hotel/{hotelId}", "invalid-id"))
+        mockMvc.perform(get("/api/v1/guests/hotel/{hotelId}", "invalid-id"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -163,7 +163,7 @@ public class GuestControllerTest {
         when(guestService.getGuestsByHotelId(999L))
                 .thenThrow(new jakarta.persistence.EntityNotFoundException("Hotel cannot be found"));
 
-        mockMvc.perform(get("/api/guests/hotel/{hotelId}", 999L))
+        mockMvc.perform(get("/api/v1/guests/hotel/{hotelId}", 999L))
                 .andExpect(status().isNotFound());
     }
 
@@ -179,7 +179,7 @@ public class GuestControllerTest {
 
         when(guestService.getGuestsByRoomId(2L)).thenReturn(List.of(mockDetail));
 
-        mockMvc.perform(get("/api/guests/room/{roomId}", 2L))
+        mockMvc.perform(get("/api/v1/guests/room/{roomId}", 2L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].firstname").value("Alice"))
                 .andExpect(jsonPath("$[0].roomNumber").value("101"))
@@ -189,7 +189,7 @@ public class GuestControllerTest {
     @Test
     @DisplayName("Should return 400 Bad Request when roomId is not a valid Long type")
     void getGuestsByRoomId_WithInvalidIdType_ShouldReturn400() throws Exception {
-        mockMvc.perform(get("/api/guests/room/{roomId}", "invalid-room-id"))
+        mockMvc.perform(get("/api/v1/guests/room/{roomId}", "invalid-room-id"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -199,7 +199,7 @@ public class GuestControllerTest {
         when(guestService.getGuestsByRoomId(999L))
                 .thenThrow(new jakarta.persistence.EntityNotFoundException("Room cannot be found"));
 
-        mockMvc.perform(get("/api/guests/room/{roomId}", 999L))
+        mockMvc.perform(get("/api/v1/guests/room/{roomId}", 999L))
                 .andExpect(status().isNotFound());
     }
 
@@ -224,7 +224,7 @@ public class GuestControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/guests/create")
+        mockMvc.perform(post("/api/v1/guests/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isCreated())
@@ -237,7 +237,7 @@ public class GuestControllerTest {
     void createGuest_WithMalformedJson_ShouldReturn400() throws Exception {
         String malformedJson = "{ invalid_json_format }";
 
-        mockMvc.perform(post("/api/guests/create")
+        mockMvc.perform(post("/api/v1/guests/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(malformedJson))
                 .andExpect(status().isBadRequest());
@@ -260,7 +260,7 @@ public class GuestControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/guests/create")
+        mockMvc.perform(post("/api/v1/guests/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isNotFound());
@@ -269,14 +269,14 @@ public class GuestControllerTest {
     @Test
     @DisplayName("Should return 204 No Content when guest is successfully deleted")
     void deleteGuest_WithValidId_ShouldReturn204() throws Exception {
-        mockMvc.perform(delete("/api/guests/{guestId}", 1L))
+        mockMvc.perform(delete("/api/v1/guests/{guestId}", 1L))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("Should return 400 Bad Request when guestId is not a valid Long type")
     void deleteGuest_WithInvalidIdType_ShouldReturn400() throws Exception {
-        mockMvc.perform(delete("/api/guests/{guestId}", "invalid-id"))
+        mockMvc.perform(delete("/api/v1/guests/{guestId}", "invalid-id"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -286,14 +286,14 @@ public class GuestControllerTest {
         org.mockito.Mockito.doThrow(new jakarta.persistence.EntityNotFoundException("Reservation could not be found."))
                 .when(guestService).deleteGuest(999L);
 
-        mockMvc.perform(delete("/api/guests/{guestId}", 999L))
+        mockMvc.perform(delete("/api/v1/guests/{guestId}", 999L))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("Should return 204 No Content when reservation is successfully canceled")
     void cancelReservation_WithValidVoucher_ShouldReturn204() throws Exception {
-        mockMvc.perform(delete("/api/guests/cancel-reservation/{voucherNumber}", "VCH-12345678"))
+        mockMvc.perform(delete("/api/v1/guests/cancel-reservation/{voucherNumber}", "VCH-12345678"))
                 .andExpect(status().isNoContent());
     }
 
@@ -303,7 +303,7 @@ public class GuestControllerTest {
         org.mockito.Mockito.doThrow(new jakarta.persistence.EntityNotFoundException("Reservation could not be found."))
                 .when(guestService).cancelReservation("VCH-INVALID");
 
-        mockMvc.perform(delete("/api/guests/cancel-reservation/{voucherNumber}", "VCH-INVALID"))
+        mockMvc.perform(delete("/api/v1/guests/cancel-reservation/{voucherNumber}", "VCH-INVALID"))
                 .andExpect(status().isNotFound());
     }
 
@@ -329,7 +329,7 @@ public class GuestControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/guests/reservation/{voucherNumber}", "VCH-12345678")
+        mockMvc.perform(put("/api/v1/guests/reservation/{voucherNumber}", "VCH-12345678")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isOk())
@@ -354,7 +354,7 @@ public class GuestControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/guests/reservation/{voucherNumber}", "VCH-INVALID")
+        mockMvc.perform(put("/api/v1/guests/reservation/{voucherNumber}", "VCH-INVALID")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
                 .andExpect(status().isNotFound());
@@ -365,7 +365,7 @@ public class GuestControllerTest {
     void updateReservation_WithMalformedJson_ShouldReturn400() throws Exception {
         String malformedJson = "{ invalid_json_format }";
 
-        mockMvc.perform(put("/api/guests/reservation/{voucherNumber}", "VCH-12345678")
+        mockMvc.perform(put("/api/v1/guests/reservation/{voucherNumber}", "VCH-12345678")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(malformedJson))
                 .andExpect(status().isBadRequest());

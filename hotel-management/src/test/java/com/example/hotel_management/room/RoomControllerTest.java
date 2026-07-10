@@ -69,7 +69,7 @@ class RoomControllerTest {
     void getAllRooms_ShouldReturn200() throws Exception {
         when(roomService.getAllRooms()).thenReturn(List.of(sampleRoomResponse));
 
-        mockMvc.perform(get("/api/rooms/all")
+        mockMvc.perform(get("/api/v1/rooms/all")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(100L))
@@ -83,7 +83,7 @@ class RoomControllerTest {
     void getRoomsByHotelId_WithValidId_ShouldReturn200() throws Exception {
         when(roomService.getRoomsByHotelId(1L)).thenReturn(List.of(sampleRoomResponse));
 
-        mockMvc.perform(get("/api/rooms/hotel/{hotelId}", 1L)
+        mockMvc.perform(get("/api/v1/rooms/hotel/{hotelId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].hotelId").value(1L));
@@ -96,7 +96,7 @@ class RoomControllerTest {
     void getRoomsByHotelId_WithNoRooms_ShouldReturn200AndEmptyList() throws Exception {
         when(roomService.getRoomsByHotelId(1L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/rooms/hotel/{hotelId}", 1L)
+        mockMvc.perform(get("/api/v1/rooms/hotel/{hotelId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
@@ -105,7 +105,7 @@ class RoomControllerTest {
     @Test
     @DisplayName("getRoomsByHotelId_WithInvalidIdType_ShouldReturn400")
     void getRoomsByHotelId_WithInvalidIdType_ShouldReturn400() throws Exception {
-        mockMvc.perform(get("/api/rooms/hotel/{hotelId}", "abc")
+        mockMvc.perform(get("/api/v1/rooms/hotel/{hotelId}", "abc")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
@@ -117,7 +117,7 @@ class RoomControllerTest {
     void getRoomById_WithValidId_ShouldReturn200() throws Exception {
         when(roomService.getRoomById(100L)).thenReturn(sampleRoomResponse);
 
-        mockMvc.perform(get("/api/rooms/{roomId}", 100L)
+        mockMvc.perform(get("/api/v1/rooms/{roomId}", 100L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(100L));
@@ -130,7 +130,7 @@ class RoomControllerTest {
     void getRoomById_WithNonExistentId_ShouldReturn404() throws Exception {
         when(roomService.getRoomById(999L)).thenThrow(new EntityNotFoundException("Room with ID 999 could not be found."));
 
-        mockMvc.perform(get("/api/rooms/{roomId}", 999L)
+        mockMvc.perform(get("/api/v1/rooms/{roomId}", 999L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -143,7 +143,7 @@ class RoomControllerTest {
 
         when(roomService.findOptimalRoom(1L, 2, checkIn, checkOut)).thenReturn(List.of(sampleRoomResponse));
 
-        mockMvc.perform(get("/api/rooms/available")
+        mockMvc.perform(get("/api/v1/rooms/available")
                         .param("hotelId", "1")
                         .param("numberOfPerson", "2")
                         .param("checkInDate", "2026-08-01")
@@ -161,7 +161,7 @@ class RoomControllerTest {
 
         when(roomService.findOptimalRoomWithoutHotelFilter(2, checkIn, checkOut)).thenReturn(List.of(sampleRoomResponse));
 
-        mockMvc.perform(get("/api/rooms/available-all")
+        mockMvc.perform(get("/api/v1/rooms/available-all")
                         .param("numberOfPerson", "2")
                         .param("checkInDate", "2026-08-01")
                         .param("checkOutDate", "2026-08-05")
@@ -173,7 +173,7 @@ class RoomControllerTest {
     @Test
     @DisplayName("getAvailableRooms_WithMissingParams_ShouldReturn400")
     void getAvailableRooms_WithMissingParams_ShouldReturn400() throws Exception {
-        mockMvc.perform(get("/api/rooms/available")
+        mockMvc.perform(get("/api/v1/rooms/available")
                         .param("hotelId", "1")
                         .param("numberOfPerson", "2")
                         .param("checkOutDate", "2026-08-05")
@@ -201,7 +201,7 @@ class RoomControllerTest {
 
         when(roomService.createRoom(any(RoomRequest.Creation.class))).thenReturn(responseDto);
 
-        mockMvc.perform(post("/api/rooms/create")
+        mockMvc.perform(post("/api/v1/rooms/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(payload)))
                 .andExpect(status().isCreated())
@@ -221,7 +221,7 @@ class RoomControllerTest {
                 .maxCapacity(0)
                 .build();
 
-        mockMvc.perform(post("/api/rooms/create")
+        mockMvc.perform(post("/api/v1/rooms/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(invalidPayload)))
                 .andExpect(status().isBadRequest());
@@ -242,7 +242,7 @@ class RoomControllerTest {
         when(roomService.createRoom(any(RoomRequest.Creation.class)))
                 .thenThrow(new EntityNotFoundException("Hotel with ID 999 could not be found."));
 
-        mockMvc.perform(post("/api/rooms/create")
+        mockMvc.perform(post("/api/v1/rooms/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(payload)))
                 .andExpect(status().isNotFound());
@@ -261,7 +261,7 @@ class RoomControllerTest {
         when(roomService.createRoom(any(RoomRequest.Creation.class)))
                 .thenThrow(new IllegalArgumentException("This room already exists in this hotel."));
 
-        mockMvc.perform(post("/api/rooms/create")
+        mockMvc.perform(post("/api/v1/rooms/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(payload)))
                 .andExpect(status().isBadRequest());
@@ -287,7 +287,7 @@ class RoomControllerTest {
 
         when(roomService.updateRoom(eq(100L), any(RoomRequest.Creation.class))).thenReturn(responseDto);
 
-        mockMvc.perform(put("/api/rooms/{roomId}", 100L)
+        mockMvc.perform(put("/api/v1/rooms/{roomId}", 100L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(payload)))
                 .andExpect(status().isOk())
@@ -308,7 +308,7 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
     when(roomService.updateRoom(eq(999L), any(RoomRequest.Creation.class)))
             .thenThrow(new EntityNotFoundException("Room with ID 999 could not be found."));
 
-    mockMvc.perform(put("/api/rooms/{roomId}", 999L)
+    mockMvc.perform(put("/api/v1/rooms/{roomId}", 999L)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(asJsonString(payload)))
             .andExpect(status().isNotFound()); 
@@ -326,7 +326,7 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
         when(roomService.updateRoom(eq(100L), any(RoomRequest.Creation.class)))
                 .thenThrow(new IllegalArgumentException("Cannot reduce capacity below the number of guests in an existing booking"));
 
-        mockMvc.perform(put("/api/rooms/{roomId}", 100L)
+        mockMvc.perform(put("/api/v1/rooms/{roomId}", 100L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(payload)))
                 .andExpect(status().isBadRequest());
@@ -335,7 +335,7 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
     @Test
     @DisplayName("deleteRoom_WithValidId_ShouldReturn204")
     void deleteRoom_WithValidId_ShouldReturn204() throws Exception {
-        mockMvc.perform(delete("/api/rooms/{roomId}", 100L)
+        mockMvc.perform(delete("/api/v1/rooms/{roomId}", 100L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
@@ -348,7 +348,7 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
         org.mockito.Mockito.doThrow(new EntityNotFoundException("Room with ID 999 could not be found."))
                 .when(roomService).deleteRoom(999L);
 
-        mockMvc.perform(delete("/api/rooms/{roomId}", 999L)
+        mockMvc.perform(delete("/api/v1/rooms/{roomId}", 999L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

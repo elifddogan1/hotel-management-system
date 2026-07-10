@@ -45,7 +45,7 @@ public class HotelControllerTest {
         HotelResponse response = HotelResponse.builder().id(1L).name("Test Otel").build();
         when(hotelService.getAllHotels()).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/hotels")
+        mockMvc.perform(get("/api/v1/hotels")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(1))
@@ -57,7 +57,7 @@ public class HotelControllerTest {
     void getAllHotels_WhenEmpty_ShouldReturn200AndEmptyList() throws Exception {
         when(hotelService.getAllHotels()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/hotels")
+        mockMvc.perform(get("/api/v1/hotels")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(0));
@@ -70,7 +70,7 @@ public class HotelControllerTest {
         HotelResponse response = HotelResponse.builder().id(1L).name("Test Otel").build();
         when(hotelService.getHotelById(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/hotels/{id}", 1L)
+        mockMvc.perform(get("/api/v1/hotels/{id}", 1L)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -80,7 +80,7 @@ public class HotelControllerTest {
     @Test
     @DisplayName("Geçersiz Tipte ID ile otel getir - HTTP 400")
     void getHotelById_WithInvalidIdType_ShouldReturn400() throws Exception {
-        mockMvc.perform(get("/api/hotels/{id}", "abc")
+        mockMvc.perform(get("/api/v1/hotels/{id}", "abc")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
@@ -90,7 +90,7 @@ public class HotelControllerTest {
     void getHotelById_WithNonExistentId_ShouldReturn404() throws Exception {
         when(hotelService.getHotelById(99L)).thenThrow(new EntityNotFoundException("Hotel not found"));
 
-        mockMvc.perform(get("/api/hotels/{id}", 99L)
+        mockMvc.perform(get("/api/v1/hotels/{id}", 99L)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
@@ -110,7 +110,7 @@ public class HotelControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/hotels")
+        mockMvc.perform(post("/api/v1/hotels")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
                 .andExpect(status().isCreated())
@@ -127,7 +127,7 @@ public class HotelControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/hotels")
+        mockMvc.perform(post("/api/v1/hotels")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidPayload))
                 .andExpect(status().isBadRequest());
@@ -147,7 +147,7 @@ public class HotelControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/hotels/{id}", 1L)
+        mockMvc.perform(put("/api/v1/hotels/{id}", 1L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validPayload))
                 .andExpect(status().isOk())
@@ -167,7 +167,7 @@ public class HotelControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/hotels/{id}", 99L)
+        mockMvc.perform(put("/api/v1/hotels/{id}", 99L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
                 .andExpect(status().isNotFound());
@@ -178,7 +178,7 @@ public class HotelControllerTest {
     void deleteHotel_WithValidId_ShouldReturn204() throws Exception {
         doNothing().when(hotelService).deleteHotel(1L);
 
-        mockMvc.perform(delete("/api/hotels/{id}", 1L)
+        mockMvc.perform(delete("/api/v1/hotels/{id}", 1L)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
@@ -188,7 +188,7 @@ public class HotelControllerTest {
     void deleteHotel_WithNonExistentId_ShouldReturn404() throws Exception {
         doThrow(new EntityNotFoundException("Hotel not found")).when(hotelService).deleteHotel(99L);
 
-        mockMvc.perform(delete("/api/hotels/{id}", 99L)
+        mockMvc.perform(delete("/api/v1/hotels/{id}", 99L)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
