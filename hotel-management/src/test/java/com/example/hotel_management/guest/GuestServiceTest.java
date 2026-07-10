@@ -43,6 +43,9 @@ class GuestServiceTest {
     @Mock
     private HotelRepository hotelRepository;
 
+    @org.mockito.Spy
+    private GuestMapper guestMapper = new GuestMapper();
+
     @InjectMocks
     private GuestService guestService; 
 
@@ -224,7 +227,7 @@ class GuestServiceTest {
     }
 
     @Test
-    void updateReservation_WhenGuestCountIncreases_ShouldAddNewGuestAndSave() {
+    void updateGuestsForReservation_WhenGuestCountIncreases_ShouldAddNewGuestAndSave() {
         String voucher = "VCH-UPDATE";
         Long roomId = 1L;
         LocalDate checkIn = LocalDate.now();
@@ -264,9 +267,8 @@ class GuestServiceTest {
                 .build();
 
         when(guestRepository.findByVoucherNumber(voucher)).thenReturn(new ArrayList<>(List.of(existingGuest)));
-        when(roomRepository.findById(roomId)).thenReturn(Optional.of(mockRoom));
 
-        GuestResponse.Creation response = guestService.updateReservation(voucher, request);
+        GuestResponse.Creation response = guestService.updateGuestsForReservation(voucher, mockRoom, request);
 
         assertNotNull(response);
         assertEquals(2, response.getGuests().size()); 
@@ -278,7 +280,7 @@ class GuestServiceTest {
     }
 
     @Test
-    void updateReservation_WhenGuestCountDecreases_ShouldRemoveExcessGuestsAndSave() {
+    void updateGuestsForReservation_WhenGuestCountDecreases_ShouldRemoveExcessGuestsAndSave() {
         String voucher = "VCH-UPDATE";
         Long roomId = 1L;
         LocalDate checkIn = LocalDate.now();
@@ -305,9 +307,8 @@ class GuestServiceTest {
                 .build();
 
         when(guestRepository.findByVoucherNumber(voucher)).thenReturn(new ArrayList<>(List.of(existingGuest1, existingGuest2, existingGuest3)));
-        when(roomRepository.findById(roomId)).thenReturn(Optional.of(mockRoom));
 
-        GuestResponse.Creation response = guestService.updateReservation(voucher, request);
+        GuestResponse.Creation response = guestService.updateGuestsForReservation(voucher, mockRoom, request);
 
         assertNotNull(response);
         assertEquals(2, response.getGuests().size());
@@ -317,42 +318,21 @@ class GuestServiceTest {
     }
 
     @Test
-    void updateReservation_WhenVoucherDoesNotExist_ShouldThrowEntityNotFoundException() {
+    void updateGuestsForReservation_WhenVoucherDoesNotExist_ShouldThrowEntityNotFoundException() {
         String invalidVoucher = "VCH-INVALID";
         GuestRequest.Creation request = GuestRequest.Creation.builder().build();
 
         when(guestRepository.findByVoucherNumber(invalidVoucher)).thenReturn(new ArrayList<>());
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            guestService.updateReservation(invalidVoucher, request);
+            guestService.updateGuestsForReservation(invalidVoucher, new Room(), request);
         });
 
         assertEquals("Reservation with voucher VCH-INVALID could not be found.", exception.getMessage());
     }
 
     @Test
-    void updateReservation_WhenCheckOutIsBeforeOrEqualCheckIn_ShouldThrowIllegalArgumentException() {
-        String voucher = "VCH-UPDATE";
-        
-        Guest existingGuest = Guest.builder().voucherNumber(voucher).build();
-        when(guestRepository.findByVoucherNumber(voucher)).thenReturn(new ArrayList<>(List.of(existingGuest)));
-
-        GuestRequest.Creation request = GuestRequest.Creation.builder()
-                .roomId(1L)
-                .checkInDate(LocalDate.now().plusDays(2))
-                .checkOutDate(LocalDate.now()) 
-                .guests(List.of(GuestRequest.GuestDto.builder().firstname("Elif").lastname("Dogan").build()))
-                .build();
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            guestService.updateReservation(voucher, request);
-        });
-
-        assertEquals("Check-out tarihi check-in tarihinden sonra olmalıdır.", exception.getMessage());
-    }
-
-    @Test
-    void updateReservation_WhenUpdateIsSuccessfulWithSameGuestCount_ShouldUpdateAndSave() {
+    void updateGuestsForReservation_WhenUpdateIsSuccessfulWithSameGuestCount_ShouldUpdateAndSave() {
         String voucher = "VCH-UPDATE";
         Long roomId = 1L;
         LocalDate checkIn = LocalDate.now();
@@ -378,9 +358,8 @@ class GuestServiceTest {
                 .build();
 
         when(guestRepository.findByVoucherNumber(voucher)).thenReturn(new ArrayList<>(List.of(existingGuest1, existingGuest2)));
-        when(roomRepository.findById(roomId)).thenReturn(Optional.of(mockRoom));
 
-        GuestResponse.Creation response = guestService.updateReservation(voucher, request);
+        GuestResponse.Creation response = guestService.updateGuestsForReservation(voucher, mockRoom, request);
 
         assertNotNull(response);
         assertEquals(2, response.getGuests().size());
@@ -391,199 +370,13 @@ class GuestServiceTest {
         verify(guestRepository, never()).deleteAll(anyList());
     }
 
-    @Test
-    void isRoomAvailable_WhenGuestCountExceedsCapacity_ShouldThrowIllegalArgumentException(){
-        Room mockRoom = new Room();
-        mockRoom.setMaxCapacity(2);
-
-        int requestedGuestCount = 3;
-        LocalDate checkIn = LocalDate.now();
-        LocalDate checkOut = LocalDate.now().plusDays(2);
-        String existingVoucher = null;
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            guestService.isRoomAvailable(mockRoom, requestedGuestCount, checkIn, checkOut, existingVoucher);
-        });
-
-        assertTrue(exception.getMessage().contains("maximum capacity is 2"));
-
-    }
-
-    @Test
-    void isRoomAvailable_WhenRoomIsEmptyAndDatesAreFree_ShouldReturnTrue() {
-        Room mockRoom = new Room();
-        mockRoom.setMaxCapacity(4);
-        mockRoom.setGuests(new ArrayList<>());
-
-        LocalDate checkIn = LocalDate.now();
-        LocalDate checkOut = LocalDate.now().plusDays(2);
-
-        Boolean result = guestService.isRoomAvailable(mockRoom, 2, checkIn, checkOut, null);
-
-        assertTrue(result); 
-    }
-
-    @Test
-    void isRoomAvailable_WhenDatesOverlapWithExistingGuest_ShouldReturnFalse() {
-
-        Room mockRoom = new Room();
-        mockRoom.setMaxCapacity(4);
-
-        Guest existingGuest = Guest.builder()
-            .voucherNumber("VCH-EXISTING")
-            .checkInDate(LocalDate.of(2026, 7, 10))
-            .checkOutDate(LocalDate.of(2026, 7, 15))
-            .build();
-    
-        mockRoom.setGuests(List.of(existingGuest)); 
-
-    
-        LocalDate newCheckIn = LocalDate.of(2026, 7, 12);
-        LocalDate newCheckOut = LocalDate.of(2026, 7, 18);
-
-        Boolean result = guestService.isRoomAvailable(mockRoom, 1, newCheckIn, newCheckOut, null);
-
-        assertFalse(result); 
-    }
-
-    @Test
-    void createGuest_WhenRoomCannotBeFound_ShouldThrowEntityNotFoundException(){
-
-        LocalDate checkIn = LocalDate.now();
-        LocalDate checkOut = LocalDate.now().plusDays(2);
-
-        Long roomId = 999L;
-
-        GuestRequest.GuestDto guestDto = GuestRequest.GuestDto.builder()
-                                                            .firstname("Elif")
-                                                            .lastname("Dogan")
-                                                            .build();
-        GuestRequest.Creation request = GuestRequest.Creation.builder()
-                                                            .roomId(roomId)
-                                                            .checkInDate(checkIn)
-                                                            .checkOutDate(checkOut)
-                                                            .guests(List.of(guestDto))
-                                                            .build();
-        when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
-
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            guestService.createGuest(request);
-        });
-
-        assertEquals("Room cannot be found", exception.getMessage());
-    }
-
     @Test 
-    void createGuest_WhenCheckOutDateIsBeforeCheckInDate_ShouldThrowIllegalArgumentException(){
-        LocalDate checkIn = LocalDate.now();
-        LocalDate checkOut = LocalDate.now().minusDays(2);
-
-        Room mockRoom = new Room();
-        Long roomId = 1L;
-        mockRoom.setId(roomId);
-
-        when(roomRepository.findById(1L)).thenReturn(Optional.of(mockRoom));
-        
-        GuestRequest.GuestDto guestDto = GuestRequest.GuestDto.builder()
-                                                            .firstname("Elif")
-                                                            .lastname("Dogan")
-                                                            .build();
-        GuestRequest.Creation request = GuestRequest.Creation.builder()
-                                                            .roomId(mockRoom.getId())
-                                                            .checkInDate(checkIn)
-                                                            .checkOutDate(checkOut)
-                                                            .guests(List.of(guestDto))
-                                                            .build();
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            guestService.createGuest(request);
-        });
-
-        assertEquals("Check-out tarihi check-in tarihinden sonra olmalıdır.", exception.getMessage());
-    }
-
-    @Test
-    void createGuest_WhenGuestCountExceedsCapacity_ShouldThrowIllegalArgumentException(){
-        Room mockRoom = new Room();
-        mockRoom.setId(1L);
-        mockRoom.setMaxCapacity(2);
-
-        when(roomRepository.findById(1L)).thenReturn(Optional.of(mockRoom));
-
-        GuestRequest.GuestDto guest1 = GuestRequest.GuestDto.builder().firstname("Elif").lastname("Doğan").build();
-        GuestRequest.GuestDto guest2 = GuestRequest.GuestDto.builder().firstname("Ali").lastname("Yılmaz").build();
-        GuestRequest.GuestDto guest3 = GuestRequest.GuestDto.builder().firstname("Ayşe").lastname("Kaya").build();
-
-        GuestRequest.Creation request = GuestRequest.Creation.builder()
-                .roomId(1L)
-                .checkInDate(LocalDate.now())
-                .checkOutDate(LocalDate.now().plusDays(2))
-                .guests(List.of(guest1, guest2, guest3)) 
-                .build();
-        
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            guestService.createGuest(request);
-        });
-
-        assertTrue(exception.getMessage().contains("maximum capacity is 2"));
-    }
-
-    @Test 
-    void createGuest_WhenRoomIsNotAvailableOnChoosenDates_ShouldThrowIllegalArgumentException(){
-
-
-        Guest existingGuest1 = Guest.builder()
-            .id(50L)
-            .firstname("Ahmet")
-            .lastname("Yılmaz")
-            .voucherNumber("VCH-EXISTING")
-            .checkInDate(LocalDate.of(2026, 7, 10))
-            .checkOutDate(LocalDate.of(2026, 7, 15))
-            .build();
-        Guest existingGuest2 = Guest.builder()
-            .id(50L)
-            .firstname("Elif")
-            .lastname("Dogan")
-            .voucherNumber("VCH-EXISTING")
-            .checkInDate(LocalDate.of(2026, 7, 10))
-            .checkOutDate(LocalDate.of(2026, 7, 15))
-            .build();
-
-
-        Room mockRoom = new Room();
-        mockRoom.setId(1L);
-        mockRoom.setMaxCapacity(4);
-        mockRoom.setGuests(new ArrayList<>(List.of(existingGuest1, existingGuest2)));
-
-        when(roomRepository.findById(1L)).thenReturn(Optional.of(mockRoom));
-
-        GuestRequest.GuestDto guest1 = GuestRequest.GuestDto.builder().firstname("Zeynep").lastname("Doğan").build();
-        GuestRequest.GuestDto guest2 = GuestRequest.GuestDto.builder().firstname("AHmet").lastname("Yılmaz").build();
-
-        GuestRequest.Creation request = GuestRequest.Creation.builder()
-                .roomId(1L)
-                .checkInDate(LocalDate.of(2026, 7, 14))
-                .checkOutDate(LocalDate.of(2026, 7, 17))
-                .guests(List.of(guest1, guest2)) 
-                .build();
-        
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            guestService.createGuest(request);
-        });
-
-        assertEquals("The room that chosen is not available between these dates", exception.getMessage());
-
-    }
-
-    @Test 
-    void createGuest_WhenCreationIsSuccessfull_ShouldReturnCreationResponse(){
+    void createGuestsForReservation_WhenCreationIsSuccessful_ShouldReturnResponse(){
         Room mockRoom = new Room();
         Long roomId = 99L;
         mockRoom.setMaxCapacity(4);
         mockRoom.setId(roomId);
         mockRoom.setGuests(new ArrayList<>());
-
-        when(roomRepository.findById(roomId)).thenReturn(Optional.of(mockRoom));
 
         GuestRequest.GuestDto guest1 = GuestRequest.GuestDto.builder()
                                                             .firstname("Elif")
@@ -600,16 +393,11 @@ class GuestServiceTest {
                 .guests(List.of(guest1, guest2)) 
                 .build();
 
-        GuestResponse.Creation response = guestService.createGuest(request);
+        GuestResponse.Creation response = guestService.createGuestsForReservation(mockRoom, "VCH-TEST", request);
 
         assertNotNull(response);
-        assertNotNull(response.getVoucherNumber());
-        assertTrue(response.getVoucherNumber().startsWith("VCH-")); 
+        assertEquals("VCH-TEST", response.getVoucherNumber());
         assertEquals(2, response.getGuests().size());
         verify(guestRepository, times(1)).saveAll(anyList());
     }
-        
-
-
-    
 }

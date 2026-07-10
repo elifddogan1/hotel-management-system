@@ -31,6 +31,9 @@ class HotelServiceTest {
     @Mock
     private HotelRepository hotelRepository;
 
+    @org.mockito.Spy
+    private HotelMapper hotelMapper = new HotelMapper();
+
     @InjectMocks
     private HotelService hotelService;
 

@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class HotelService {
 
     private final HotelRepository hotelRepository;
+    private final HotelMapper hotelMapper;
 
     public HotelResponse createHotel(HotelRequest.Creation request) {
         Hotel hotel = Hotel.builder()
@@ -26,19 +27,19 @@ public class HotelService {
                 .build();
                 
         Hotel savedHotel = hotelRepository.save(hotel);
-        return mapToResponse(savedHotel);
+        return hotelMapper.toResponse(savedHotel);
     }
 
     public List<HotelResponse> getAllHotels() {
         return hotelRepository.findAll().stream()
-                .map(this::mapToResponse)
+                .map(hotelMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public HotelResponse getHotelById(Long id) {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Hotel not found with ID: " + id));
-        return mapToResponse(hotel);
+        return hotelMapper.toResponse(hotel);
     }
 
     @Transactional
@@ -62,15 +63,6 @@ public class HotelService {
         hotel.setContactInfo(request.getContactInfo());
         
         Hotel updatedHotel = hotelRepository.save(hotel);
-        return mapToResponse(updatedHotel);
-    }
-
-    private HotelResponse mapToResponse(Hotel hotel) {
-        return HotelResponse.builder()
-                .id(hotel.getId())
-                .name(hotel.getName())
-                .location(hotel.getLocation())
-                .contactInfo(hotel.getContactInfo())
-                .build();
+        return hotelMapper.toResponse(updatedHotel);
     }
 }

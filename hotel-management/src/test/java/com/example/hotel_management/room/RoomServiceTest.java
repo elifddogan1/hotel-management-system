@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,6 +42,9 @@ class RoomServiceTest {
 
     @Mock
     private HotelRepository hotelRepository;
+
+    @org.mockito.Spy
+    private RoomMapper roomMapper = new RoomMapper();
 
     @InjectMocks
     private RoomService roomService;
@@ -412,6 +416,61 @@ class RoomServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(roomRepository, times(1)).findByMaxCapacityGreaterThanEqual(numberOfPerson);
+    }
+
+    @Test
+    @DisplayName("isRoomAvailable - Hata Senaryosu: Konuk sayısı kapasiteyi aşarsa IllegalArgumentException fırlatmalı")
+    void isRoomAvailable_WhenGuestCountExceedsCapacity_ShouldThrowIllegalArgumentException(){
+        Room mockRoom = new Room();
+        mockRoom.setMaxCapacity(2);
+
+        int requestedGuestCount = 3;
+        java.time.LocalDate checkIn = java.time.LocalDate.now();
+        java.time.LocalDate checkOut = java.time.LocalDate.now().plusDays(2);
+        String existingVoucher = null;
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            roomService.isRoomAvailable(mockRoom, requestedGuestCount, checkIn, checkOut, existingVoucher);
+        });
+
+        assertTrue(exception.getMessage().contains("maximum capacity is 2"));
+    }
+
+    @Test
+    @DisplayName("isRoomAvailable - Başarılı Senaryo: Oda boş ve tarihler uygunsa true dönmeli")
+    void isRoomAvailable_WhenRoomIsEmptyAndDatesAreFree_ShouldReturnTrue() {
+        Room mockRoom = new Room();
+        mockRoom.setMaxCapacity(4);
+        mockRoom.setGuests(new java.util.ArrayList<>());
+
+        java.time.LocalDate checkIn = java.time.LocalDate.now();
+        java.time.LocalDate checkOut = java.time.LocalDate.now().plusDays(2);
+
+        Boolean result = roomService.isRoomAvailable(mockRoom, 2, checkIn, checkOut, null);
+
+        assertTrue(result); 
+    }
+
+    @Test
+    @DisplayName("isRoomAvailable - Çakışma Senaryosu: Tarihler çakışıyorsa false dönmeli")
+    void isRoomAvailable_WhenDatesOverlapWithExistingGuest_ShouldReturnFalse() {
+        Room mockRoom = new Room();
+        mockRoom.setMaxCapacity(4);
+
+        Guest existingGuest = Guest.builder()
+            .voucherNumber("VCH-EXISTING")
+            .checkInDate(java.time.LocalDate.of(2026, 7, 10))
+            .checkOutDate(java.time.LocalDate.of(2026, 7, 15))
+            .build();
+    
+        mockRoom.setGuests(List.of(existingGuest)); 
+
+        java.time.LocalDate newCheckIn = java.time.LocalDate.of(2026, 7, 12);
+        java.time.LocalDate newCheckOut = java.time.LocalDate.of(2026, 7, 18);
+
+        Boolean result = roomService.isRoomAvailable(mockRoom, 1, newCheckIn, newCheckOut, null);
+
+        assertFalse(result); 
     }
 
 }
