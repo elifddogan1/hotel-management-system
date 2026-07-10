@@ -8,9 +8,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,12 +45,6 @@ public PagedResponse<GuestResponse.QueryDetail> getGuests(
         return guestService.getGuestsByRoomId(roomId);
     }
 
-    @PostMapping("/create")
-    @ResponseStatus(HttpStatus.CREATED)
-    public GuestResponse.Creation createGuest(@RequestBody GuestRequest.Creation request) {
-        return guestService.createGuest(request);
-    }
-
     @DeleteMapping("/{guestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGuest(@PathVariable Long guestId) {
@@ -64,11 +55,5 @@ public PagedResponse<GuestResponse.QueryDetail> getGuests(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelReservation(@PathVariable String voucherNumber) {
         guestService.cancelReservation(voucherNumber);
-    }
-
-    @PutMapping("/reservation/{voucherNumber}")
-    public GuestResponse.Creation updateReservation(@PathVariable String voucherNumber,
-            @RequestBody GuestRequest.Creation request) {
-        return guestService.updateReservation(voucherNumber, request);
     }
 }
