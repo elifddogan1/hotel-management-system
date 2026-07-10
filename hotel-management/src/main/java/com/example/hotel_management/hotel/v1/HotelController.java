@@ -1,4 +1,4 @@
-package com.example.hotel_management.hotel;
+package com.example.hotel_management.hotel.v1;
 
 import java.util.List;
 
@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.hotel_management.hotel.dto.HotelRequest;
-import com.example.hotel_management.hotel.dto.HotelResponse;
+import com.example.hotel_management.hotel.HotelService;
+import com.example.hotel_management.hotel.v1.dto.HotelRequest;
+import com.example.hotel_management.hotel.v1.dto.HotelResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.example.hotel_management.guest;
+package com.example.hotel_management.guest.v1;
 
 import java.util.List;
 
@@ -16,8 +16,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.hotel_management.common.PagedResponse;
-import com.example.hotel_management.guest.dto.GuestRequest;
-import com.example.hotel_management.guest.dto.GuestResponse;
+import com.example.hotel_management.guest.GuestService;
+import com.example.hotel_management.guest.v1.dto.GuestRequest;
+import com.example.hotel_management.guest.v1.dto.GuestResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

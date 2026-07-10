@@ -5,8 +5,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.example.hotel_management.hotel.dto.HotelRequest;
-import com.example.hotel_management.hotel.dto.HotelResponse;
+import com.example.hotel_management.hotel.v1.dto.HotelRequest;
+import com.example.hotel_management.hotel.v1.dto.HotelResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

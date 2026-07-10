@@ -22,8 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.hotel_management.common.GlobalExceptionHandler;
 import com.example.hotel_management.common.PagedResponse;
-import com.example.hotel_management.guest.dto.GuestRequest;
-import com.example.hotel_management.guest.dto.GuestResponse;
+import com.example.hotel_management.guest.v1.GuestController;
+import com.example.hotel_management.guest.v1.dto.GuestRequest;
+import com.example.hotel_management.guest.v1.dto.GuestResponse;
 
 @WebMvcTest({GuestController.class, GlobalExceptionHandler.class})
 public class GuestControllerTest {

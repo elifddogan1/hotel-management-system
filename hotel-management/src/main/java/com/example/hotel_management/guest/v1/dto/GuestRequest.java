@@ -1,15 +1,17 @@
-package com.example.hotel_management.hotel.dto;
+package com.example.hotel_management.guest.v1.dto;
+
+import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public final class HotelRequest {
+public final class GuestRequest {
 
-    private HotelRequest() {
+    private GuestRequest() {
     }
 
     @Data
@@ -17,29 +19,21 @@ public final class HotelRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Creation {
-        @NotBlank(message = "Hotel name is required")
-        private String name;
-        private String location;
-        private String contactInfo;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Update {
-        @NotBlank(message = "Hotel name is required")
-        private String name;
-        private String location;
-        private String contactInfo;
+        private Long roomId;
+        private LocalDate checkInDate;
+        private LocalDate checkOutDate;
+        private List<GuestDto> guests;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Search {
-        private String name;
-        private String location;
+        private String firstname;
+        private String lastname;
+        private String voucherNumber;
+        private String roomNumber;
+        private String hotelName;
 
         @Min(value = 0, message = "Page number cannot be less than 0")
         private Integer page = 0;
@@ -49,5 +43,14 @@ public final class HotelRequest {
 
         private String sortBy = "id";
         private String direction = "asc";
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GuestDto {
+        private String firstname;
+        private String lastname;
     }
 }

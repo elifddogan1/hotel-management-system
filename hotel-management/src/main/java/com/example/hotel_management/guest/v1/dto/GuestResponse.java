@@ -1,10 +1,12 @@
-package com.example.hotel_management.guest.dto;
+package com.example.hotel_management.guest.v1.dto;
 
-import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.example.hotel_management.guest.dto.GuestRequest.GuestDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public final class GuestResponse {
 

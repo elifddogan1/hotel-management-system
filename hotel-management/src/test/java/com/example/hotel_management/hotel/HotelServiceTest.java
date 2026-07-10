@@ -20,8 +20,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.hotel_management.hotel.dto.HotelRequest;
-import com.example.hotel_management.hotel.dto.HotelResponse;
+import com.example.hotel_management.hotel.v1.dto.HotelRequest;
+import com.example.hotel_management.hotel.v1.dto.HotelResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 

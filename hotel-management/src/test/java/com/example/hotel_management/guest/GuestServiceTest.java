@@ -22,8 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.hotel_management.guest.dto.GuestRequest;
-import com.example.hotel_management.guest.dto.GuestResponse;
+import com.example.hotel_management.guest.v1.dto.GuestRequest;
+import com.example.hotel_management.guest.v1.dto.GuestResponse;
 import com.example.hotel_management.hotel.Hotel;
 import com.example.hotel_management.hotel.HotelRepository;
 import com.example.hotel_management.room.Room;

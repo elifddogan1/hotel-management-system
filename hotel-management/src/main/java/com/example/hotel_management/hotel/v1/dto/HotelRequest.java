@@ -1,16 +1,15 @@
-package com.example.hotel_management.room.dto;
+package com.example.hotel_management.hotel.v1.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public final class RoomRequest {
+public final class HotelRequest {
 
-    private RoomRequest() {
+    private HotelRequest() {
     }
 
     @Data
@@ -18,27 +17,29 @@ public final class RoomRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Creation {
-        @NotNull(message = "Hotel ID cannot be null")
-        private Long hotelId;
+        @NotBlank(message = "Hotel name is required")
+        private String name;
+        private String location;
+        private String contactInfo;
+    }
 
-        @NotBlank(message = "Room number cannot be blank")
-        private String roomNumber;
-
-        @NotBlank(message = "Room type cannot be blank")
-        private String roomType;
-
-        @NotNull(message = "Max capacity cannot be null")
-        @Min(value = 1, message = "Max capacity must be at least 1")
-        private Integer maxCapacity;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Update {
+        @NotBlank(message = "Hotel name is required")
+        private String name;
+        private String location;
+        private String contactInfo;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Search {
-        private String roomNumber;
-        private String roomType;
-        private Long hotelId;
+        private String name;
+        private String location;
 
         @Min(value = 0, message = "Page number cannot be less than 0")
         private Integer page = 0;

@@ -1,17 +1,16 @@
-package com.example.hotel_management.guest.dto;
-
-import java.time.LocalDate;
-import java.util.List;
+package com.example.hotel_management.room.v1.dto;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public final class GuestRequest {
+public final class RoomRequest {
 
-    private GuestRequest() {
+    private RoomRequest() {
     }
 
     @Data
@@ -19,21 +18,27 @@ public final class GuestRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Creation {
-        private Long roomId;
-        private LocalDate checkInDate;
-        private LocalDate checkOutDate;
-        private List<GuestDto> guests;
+        @NotNull(message = "Hotel ID cannot be null")
+        private Long hotelId;
+
+        @NotBlank(message = "Room number cannot be blank")
+        private String roomNumber;
+
+        @NotBlank(message = "Room type cannot be blank")
+        private String roomType;
+
+        @NotNull(message = "Max capacity cannot be null")
+        @Min(value = 1, message = "Max capacity must be at least 1")
+        private Integer maxCapacity;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Search {
-        private String firstname;
-        private String lastname;
-        private String voucherNumber;
         private String roomNumber;
-        private String hotelName;
+        private String roomType;
+        private Long hotelId;
 
         @Min(value = 0, message = "Page number cannot be less than 0")
         private Integer page = 0;
@@ -43,14 +48,5 @@ public final class GuestRequest {
 
         private String sortBy = "id";
         private String direction = "asc";
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class GuestDto {
-        private String firstname;
-        private String lastname;
     }
 }

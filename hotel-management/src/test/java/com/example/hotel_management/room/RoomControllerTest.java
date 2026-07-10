@@ -26,8 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.hotel_management.common.PagedResponse;
-import com.example.hotel_management.room.dto.RoomRequest;
-import com.example.hotel_management.room.dto.RoomResponse;
+import com.example.hotel_management.room.v1.RoomController;
+import com.example.hotel_management.room.v1.dto.RoomRequest;
+import com.example.hotel_management.room.v1.dto.RoomResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 

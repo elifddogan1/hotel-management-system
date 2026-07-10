@@ -1,4 +1,4 @@
-package com.example.hotel_management.room;
+package com.example.hotel_management.room.v1;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,8 +18,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.hotel_management.common.PagedResponse;
-import com.example.hotel_management.room.dto.RoomRequest;
-import com.example.hotel_management.room.dto.RoomResponse;
+import com.example.hotel_management.room.RoomService;
+import com.example.hotel_management.room.v1.dto.RoomRequest;
+import com.example.hotel_management.room.v1.dto.RoomResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,6 @@ public class RoomController {
 
     private final RoomService roomService;
 
-    // Sayfalamalı ve filtrelemeli ana arama endpoint'i
     @GetMapping
     public PagedResponse<RoomResponse.QueryDetail> getRooms(
             @Valid @ParameterObject @ModelAttribute RoomRequest.Search search) {
@@ -71,8 +71,6 @@ public class RoomController {
         return roomService.findOptimalRoomWithoutHotelFilter(numberOfPerson, checkInDate, checkOutDate);
     }
 
-    // GuestController'daki "/create" yapısına uygun hale getirildi. 
-    // hotelId zaten RoomRequest.Creation DTO'sunun içinde olduğu için PathVariable kaldırıldı.
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public RoomResponse.Creation createRoom(@Valid @RequestBody RoomRequest.Creation request) {

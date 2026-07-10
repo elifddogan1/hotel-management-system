@@ -1,4 +1,4 @@
-package com.example.hotel_management.room.dto;
+package com.example.hotel_management.room.v1.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

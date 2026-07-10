@@ -15,8 +15,8 @@ import com.example.hotel_management.common.PagedResponse;
 import com.example.hotel_management.guest.Guest;
 import com.example.hotel_management.hotel.Hotel;
 import com.example.hotel_management.hotel.HotelRepository;
-import com.example.hotel_management.room.dto.RoomRequest;
-import com.example.hotel_management.room.dto.RoomResponse;
+import com.example.hotel_management.room.v1.dto.RoomRequest;
+import com.example.hotel_management.room.v1.dto.RoomResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -92,7 +92,6 @@ public class RoomService {
             }
         }
 
-        // Otel değişikliği var mı kontrol et (Opsiyonel: Eğer otel değişebiliyorsa)
         if (!room.getHotel().getId().equals(request.getHotelId())) {
             Hotel hotel = hotelRepository.findById(request.getHotelId())
                     .orElseThrow(() -> new EntityNotFoundException(
@@ -117,7 +116,6 @@ public class RoomService {
 
     public PagedResponse<RoomResponse.QueryDetail> searchAndSortRooms(RoomRequest.Search request) {
         
-        // Not: Bu kısım için bir RoomSpecification sınıfı oluşturman gerekecek (GuestSpecification'a benzer)
         Specification<Room> spec = Specification.where(RoomSpecification.roomNumberFiltering(request.getRoomNumber()))
                 .and(RoomSpecification.roomTypeFiltering(request.getRoomType()))
                 .and(RoomSpecification.hotelIdFiltering(request.getHotelId()));
@@ -165,7 +163,6 @@ public class RoomService {
         return filterOptimalRooms(roomsWithSufficientCapacity, checkInDate, checkOutDate);
     }
 
-    // --- YARDIMCI METOTLAR (HELPER METHODS) ---
 
     private Room getRoomEntityById(Long roomId) {
         return roomRepository.findById(roomId)

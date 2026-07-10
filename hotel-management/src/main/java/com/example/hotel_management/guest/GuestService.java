@@ -12,9 +12,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.example.hotel_management.common.PagedResponse;
-import com.example.hotel_management.guest.dto.GuestRequest;
-import com.example.hotel_management.guest.dto.GuestResponse;
-
+import com.example.hotel_management.guest.v1.dto.GuestRequest;
+import com.example.hotel_management.guest.v1.dto.GuestResponse;
 import com.example.hotel_management.room.Room;
 import com.example.hotel_management.room.RoomRepository;
 

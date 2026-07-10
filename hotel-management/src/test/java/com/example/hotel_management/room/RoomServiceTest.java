@@ -28,8 +28,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.hotel_management.guest.Guest;
 import com.example.hotel_management.hotel.Hotel;
 import com.example.hotel_management.hotel.HotelRepository;
-import com.example.hotel_management.room.dto.RoomRequest;
-import com.example.hotel_management.room.dto.RoomResponse;
+import com.example.hotel_management.room.v1.dto.RoomRequest;
+import com.example.hotel_management.room.v1.dto.RoomResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 
