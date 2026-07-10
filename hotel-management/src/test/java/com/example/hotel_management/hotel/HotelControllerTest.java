@@ -37,9 +37,7 @@ public class HotelControllerTest {
     @MockitoBean
     private HotelService hotelService;
 
-    // ==========================================
-    // GET /api/hotels (Tüm Otelleri Listeleme)
-    // ==========================================
+    
 
     @Test
     @DisplayName("Bütün otelleri listele - Başarılı")
@@ -65,9 +63,6 @@ public class HotelControllerTest {
                 .andExpect(jsonPath("$.size()").value(0));
     }
 
-    // ==========================================
-    // GET /api/hotels/{id} (ID'ye Göre Getirme)
-    // ==========================================
 
     @Test
     @DisplayName("Geçerli ID ile otel getir - Başarılı")
@@ -100,10 +95,6 @@ public class HotelControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ==========================================
-    // POST /api/hotels (Otel Oluşturma)
-    // ==========================================
-
     @Test
     @DisplayName("Geçerli veri ile otel oluştur - Başarılı (HTTP 201)")
     void createHotel_WithValidPayload_ShouldReturn201() throws Exception {
@@ -130,7 +121,6 @@ public class HotelControllerTest {
     @Test
     @DisplayName("Zorunlu alan eksik otel oluştur - HTTP 400")
     void createHotel_WithMissingRequiredFields_ShouldReturn400() throws Exception {
-        // Name alanı DTO'da @NotBlank ile işaretlendiği için boş gönderildiğinde 400 dönmeli
         String invalidPayload = """
                 {
                     "location": "Antalya"
@@ -142,10 +132,6 @@ public class HotelControllerTest {
                 .content(invalidPayload))
                 .andExpect(status().isBadRequest());
     }
-
-    // ==========================================
-    // PUT /api/hotels/{id} (Otel Güncelleme)
-    // ==========================================
 
     @Test
     @DisplayName("Geçerli veri ile otel güncelle - Başarılı")
@@ -186,10 +172,6 @@ public class HotelControllerTest {
                 .content(payload))
                 .andExpect(status().isNotFound());
     }
-
-    // ==========================================
-    // DELETE /api/hotels/{id} (Otel Silme)
-    // ==========================================
 
     @Test
     @DisplayName("Geçerli ID ile otel sil - Başarılı (HTTP 204)")

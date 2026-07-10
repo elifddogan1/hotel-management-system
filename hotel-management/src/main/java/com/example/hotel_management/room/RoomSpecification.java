@@ -5,15 +5,13 @@ import org.springframework.data.jpa.domain.Specification;
 public class RoomSpecification {
 
     private RoomSpecification() {
-        // Utility sınıflarının instance'ı oluşturulmasını engellemek için
     }
 
     public static Specification<Room> roomNumberFiltering(String roomNumber) {
         return (root, query, criteriaBuilder) -> {
             if (roomNumber == null || roomNumber.trim().isEmpty()) {
-                return criteriaBuilder.conjunction(); // Filtre null ise yoksay
+                return criteriaBuilder.conjunction();
             }
-            // Oda numarasında büyük/küçük harf duyarsız kısmi arama yapar (LIKE %...%)
             return criteriaBuilder.like(
                     criteriaBuilder.lower(root.get("roomNumber")),
                     "%" + roomNumber.toLowerCase() + "%"
@@ -38,7 +36,6 @@ public class RoomSpecification {
             if (hotelId == null) {
                 return criteriaBuilder.conjunction();
             }
-            // İlişkili Hotel entity'si üzerinden ID eşleşmesi arar
             return criteriaBuilder.equal(root.get("hotel").get("id"), hotelId);
         };
     }

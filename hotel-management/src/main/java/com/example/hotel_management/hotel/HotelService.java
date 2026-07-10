@@ -44,7 +44,6 @@ public class HotelService {
         if (!hotelRepository.existsById(id)) {
             throw new EntityNotFoundException("Hotel not found with ID: " + id);
         }
-        // @SQLDelete anotasyonu sayesinde bu işlem otomatik olarak update'e dönüşecek.
         hotelRepository.deleteById(id);
     }
 
@@ -60,7 +59,6 @@ public class HotelService {
         return mapToResponse(updatedHotel);
     }
 
-    // Helper method for mapping Entity to Response DTO
     private HotelResponse mapToResponse(Hotel hotel) {
         return HotelResponse.builder()
                 .id(hotel.getId())

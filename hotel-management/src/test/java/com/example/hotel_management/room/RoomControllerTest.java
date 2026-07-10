@@ -14,7 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest; // Tam senin şablonundaki import
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest; 
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -64,8 +64,6 @@ class RoomControllerTest {
                 .build();
     }
 
-    // --- GET ALL ROOMS SENARYOLARI ---
-
     @Test
     @DisplayName("getAllRooms_ShouldReturn200")
     void getAllRooms_ShouldReturn200() throws Exception {
@@ -79,8 +77,6 @@ class RoomControllerTest {
 
         verify(roomService, times(1)).getAllRooms();
     }
-
-    // --- GET ROOMS BY HOTEL ID SENARYOLARI ---
 
     @Test
     @DisplayName("getRoomsByHotelId_WithValidId_ShouldReturn200")
@@ -109,15 +105,12 @@ class RoomControllerTest {
     @Test
     @DisplayName("getRoomsByHotelId_WithInvalidIdType_ShouldReturn400")
     void getRoomsByHotelId_WithInvalidIdType_ShouldReturn400() throws Exception {
-        // hotelId yerine "abc" string'i yollandığında bad request fırlatmalı
         mockMvc.perform(get("/api/rooms/hotel/{hotelId}", "abc")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
 
         verify(roomService, never()).getRoomsByHotelId(any());
     }
-
-    // --- GET ROOM BY ID SENARYOLARI ---
 
     @Test
     @DisplayName("getRoomById_WithValidId_ShouldReturn200")
@@ -142,8 +135,6 @@ class RoomControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // --- GET AVAILABLE ROOMS SENARYOLARI ---
-
     @Test
     @DisplayName("getAvailableRooms_WithValidParams_ShouldReturn200")
     void getAvailableRooms_WithValidParams_ShouldReturn200() throws Exception {
@@ -152,7 +143,7 @@ class RoomControllerTest {
 
         when(roomService.findOptimalRoom(1L, 2, checkIn, checkOut)).thenReturn(List.of(sampleRoomResponse));
 
-        mockMvc.perform(get("/api/rooms/available") // Endpoint'i "/available" olarak güncellemiştik
+        mockMvc.perform(get("/api/rooms/available")
                         .param("hotelId", "1")
                         .param("numberOfPerson", "2")
                         .param("checkInDate", "2026-08-01")
@@ -182,7 +173,6 @@ class RoomControllerTest {
     @Test
     @DisplayName("getAvailableRooms_WithMissingParams_ShouldReturn400")
     void getAvailableRooms_WithMissingParams_ShouldReturn400() throws Exception {
-        // checkInDate parametresi eksik yollandığında
         mockMvc.perform(get("/api/rooms/available")
                         .param("hotelId", "1")
                         .param("numberOfPerson", "2")
@@ -190,8 +180,6 @@ class RoomControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
-
-    // --- CREATE ROOM SENARYOLARI ---
 
     @Test
     @DisplayName("createRoom_WithValidPayload_ShouldReturn201")
@@ -226,7 +214,6 @@ class RoomControllerTest {
     @Test
     @DisplayName("createRoom_WithMalformedJson_ShouldReturn400")
     void createRoom_WithMalformedJson_ShouldReturn400() throws Exception {
-        // roomNumber boş ve maxCapacity 0 (Min(1) kuralına aykırı) olan geçersiz bir payload
         RoomRequest.Creation invalidPayload = RoomRequest.Creation.builder()
                 .hotelId(1L)
                 .roomNumber("")
@@ -280,8 +267,6 @@ class RoomControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // --- UPDATE ROOM SENARYOLARI ---
-
     @Test
     @DisplayName("updateRoom_WithValidPayload_ShouldReturn200")
     void updateRoom_WithValidPayload_ShouldReturn200() throws Exception {
@@ -313,12 +298,11 @@ class RoomControllerTest {
     @Test
 @DisplayName("updateRoom_WithNonExistentId_ShouldReturn404")
 void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
-    // ÇÖZÜM: Tüm alanları valid (geçerli) dolduruyoruz ki validasyona takılmasın, servis katmanına geçebilsin
     RoomRequest.Creation payload = RoomRequest.Creation.builder()
             .hotelId(1L)
             .roomNumber("101")
-            .roomType("Deluxe Suite") // Eklenen zorunlu alan
-            .maxCapacity(2)          // Eklenen zorunlu alan
+            .roomType("Deluxe Suite") 
+            .maxCapacity(2)          
             .build();
 
     when(roomService.updateRoom(eq(999L), any(RoomRequest.Creation.class)))
@@ -327,7 +311,7 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
     mockMvc.perform(put("/api/rooms/{roomId}", 999L)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(asJsonString(payload)))
-            .andExpect(status().isNotFound()); // Artık burası başarıyla 404 bekleyecek ve alacak
+            .andExpect(status().isNotFound()); 
 }
 
     @Test
@@ -336,7 +320,7 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
         RoomRequest.Creation payload = RoomRequest.Creation.builder()
                 .hotelId(1L)
                 .roomNumber("101")
-                .maxCapacity(1) // Kapasiteyi çok düşürdük
+                .maxCapacity(1) 
                 .build();
 
         when(roomService.updateRoom(eq(100L), any(RoomRequest.Creation.class)))
@@ -347,8 +331,6 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
                         .content(asJsonString(payload)))
                 .andExpect(status().isBadRequest());
     }
-
-    // --- DELETE ROOM SENARYOLARI ---
 
     @Test
     @DisplayName("deleteRoom_WithValidId_ShouldReturn204")
@@ -363,7 +345,6 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
     @Test
     @DisplayName("deleteRoom_WithNonExistentId_ShouldReturn404")
     void deleteRoom_WithNonExistentId_ShouldReturn404() throws Exception {
-        // doThrow kullanarak void metotların exception fırlatmasını simüle ediyoruz
         org.mockito.Mockito.doThrow(new EntityNotFoundException("Room with ID 999 could not be found."))
                 .when(roomService).deleteRoom(999L);
 
@@ -372,7 +353,6 @@ void updateRoom_WithNonExistentId_ShouldReturn404() throws Exception {
                 .andExpect(status().isNotFound());
     }
 
-    // --- HELPER METHOD FOR JSON CONVERSION ---
     private static String asJsonString(final Object obj) {
         try {
             return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(obj);
