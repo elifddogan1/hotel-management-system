@@ -30,7 +30,7 @@ services:
     build: ./hotel-management-front
     container_name: hotel_frontend_app
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       - backend
 
