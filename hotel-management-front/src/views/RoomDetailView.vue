@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { roomService, type Room, type RoomCreationRequest } from '../services/roomService';
-import { guestService, type Guest } from '../services/guestService';
+import { roomService, type RoomQueryDetail, type RoomCreationRequest } from '../services/roomService';
+import { guestService, type GuestQueryDetail } from '../services/guestService';
 // Profesyonel tasarıma uygun vektörel ikonlarımızı dahil ettik
 import { ArrowLeft, BedDouble, Users, CalendarPlus, CalendarClock, Loader2, CheckCircle2, XCircle, UserCircle, Pencil, X } from 'lucide-vue-next';
 
@@ -12,8 +12,8 @@ const router = useRouter();
 const roomId = Number(route.params.roomId);
 const hotelId = Number(route.params.hotelId);
 
-const room = ref<Room | null>(null);
-const reservations = ref<Guest[]>([]);
+const room = ref<RoomQueryDetail | null>(null);
+const reservations = ref<GuestQueryDetail[]>([]);
 const isLoading = ref(true);
 
 // V-Calendar için rezervasyon aralıklarını işaretle
@@ -32,9 +32,12 @@ const attributes = computed(() => {
 const loadData = async () => {
   isLoading.value = true;
   try {
-    const allRooms = await roomService.getRoomsByHotelId(hotelId);
-    room.value = allRooms.find(r => r.id === roomId) || null;
-    reservations.value = await guestService.getGuestsByRoomId(roomId);
+    const [fetchedRoom, fetchedReservations] = await Promise.all([
+      roomService.getRoomById(roomId),
+      guestService.getGuestsByRoomId(roomId)
+    ]);
+    room.value = fetchedRoom;
+    reservations.value = fetchedReservations;
   } catch (error) {
     console.error("Veri yüklenirken hata:", error);
   } finally {
@@ -51,6 +54,7 @@ const isRoomCurrentlyOccupied = computed(() => {
 
 const isEditModalOpen = ref(false);
 const editRoomForm = ref<RoomCreationRequest>({
+  hotelId: hotelId,
   roomNumber: '',
   roomType: 'STANDARD',
   maxCapacity: 2
@@ -59,6 +63,7 @@ const editRoomForm = ref<RoomCreationRequest>({
 const openEditRoomModal = () => {
   if (room.value) {
     editRoomForm.value = {
+      hotelId: hotelId,
       roomNumber: room.value.roomNumber,
       roomType: room.value.roomType,
       maxCapacity: room.value.maxCapacity

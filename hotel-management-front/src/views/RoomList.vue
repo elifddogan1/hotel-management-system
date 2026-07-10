@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { roomService, type Room } from '../services/roomService';
-import { hotelService, type Hotel } from '../services/hotelService';
+import { roomService, type RoomQueryDetail } from '../services/roomService';
 // Profesyonel ikonlarımızı ekledik
 import { Search, Building2, Users, BedDouble, ChevronRight, Loader2, SearchX } from 'lucide-vue-next';
 
 const router = useRouter();
-const rooms = ref<Room[]>([]);
-const hotels = ref<Hotel[]>([]);
+const rooms = ref<RoomQueryDetail[]>([]);
 const isLoading = ref(true);
 
 // Filtre stateleri
@@ -18,21 +16,13 @@ const filterType = ref<string>('');
 const loadData = async () => {
   isLoading.value = true;
   try {
-    const [fetchedRooms, fetchedHotels] = await Promise.all([
-      roomService.getAllRooms(),
-      hotelService.getAllHotels()
-    ]);
+    const fetchedRooms = await roomService.getAllRooms();
     rooms.value = fetchedRooms;
-    hotels.value = fetchedHotels;
   } catch (error) {
     console.error(error);
   } finally {
     isLoading.value = false;
   }
-};
-
-const getHotelName = (hotelId: number) => {
-  return hotels.value.find(h => h.id === hotelId)?.name || 'Bilinmeyen Otel';
 };
 
 // Frontend üzerinde anlık filtreleme
@@ -44,7 +34,7 @@ const filteredRooms = computed(() => {
   });
 });
 
-const goToDetail = (room: Room) => {
+const goToDetail = (room: RoomQueryDetail) => {
   router.push({ name: 'RoomDetail', params: { hotelId: room.hotelId, roomId: room.id } });
 };
 
@@ -118,7 +108,7 @@ onMounted(() => {
           <div class="card-body">
             <p class="meta-info">
               <Building2 :size="16" class="meta-icon" />
-              <span>{{ getHotelName(room.hotelId) }}</span>
+              <span>{{ room.hotelName || 'Bilinmeyen Otel' }}</span>
             </p>
             <p class="meta-info">
               <Users :size="16" class="meta-icon" />

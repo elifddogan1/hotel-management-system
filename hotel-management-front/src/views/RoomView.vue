@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { roomService, type Room } from '../services/roomService';
-import { hotelService, type Hotel } from '../services/hotelService';
+import { roomService, type RoomQueryDetail } from '../services/roomService';
+import { hotelService, type HotelResponse } from '../services/hotelService';
 // Profesyonel ikonları dahil ediyoruz
 import { Filter, Building2, Users, BedDouble, ChevronRight, Loader2, SearchX } from 'lucide-vue-next';
 
 const router = useRouter();
-const rooms = ref<Room[]>([]);
-const hotels = ref<Hotel[]>([]);
+const rooms = ref<RoomQueryDetail[]>([]);
+const hotels = ref<HotelResponse[]>([]);
 const isLoading = ref(true);
 
 // Filtre Stateleri
@@ -32,10 +32,6 @@ const loadData = async () => {
   }
 };
 
-const getHotelName = (hotelId: number) => {
-  return hotels.value.find(h => h.id === hotelId)?.name || 'Bilinmeyen Otel';
-};
-
 const filteredRooms = computed(() => {
   return rooms.value.filter(room => {
     const matchHotel = filterHotelId.value === '' || room.hotelId === filterHotelId.value;
@@ -46,7 +42,7 @@ const filteredRooms = computed(() => {
   });
 });
 
-const goToDetail = (room: Room) => {
+const goToDetail = (room: RoomQueryDetail) => {
   router.push({ name: 'room-detail', params: { hotelId: room.hotelId, roomId: room.id } });
 };
 
@@ -137,7 +133,7 @@ onMounted(() => {
           <div class="card-body">
             <p class="meta-info">
               <Building2 :size="16" class="meta-icon" />
-              <span>{{ getHotelName(room.hotelId) }}</span>
+              <span>{{ room.hotelName || 'Bilinmeyen Otel' }}</span>
             </p>
             <p class="meta-info">
               <Users :size="16" class="meta-icon" />
