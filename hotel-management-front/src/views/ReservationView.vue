@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { roomService, type Room, type AvailableRoomSearchParams } from '../services/roomService';
-import { hotelService, type Hotel } from '../services/hotelService';
+import { roomService, type RoomQueryDetail, type AvailableRoomSearchParams } from '../services/roomService';
+import { hotelService, type HotelResponse } from '../services/hotelService';
 import { guestService, type GuestCreationRequest } from '../services/guestService';
 // Profesyonel ikonlarımızı ekledik
 import { CalendarSearch, BedDouble, CheckCircle2, Users, UserPlus, Trash2, Ticket, Building2, CalendarPlus } from 'lucide-vue-next';
 
 const router = useRouter();
 const route = useRoute();
-const rooms = ref<Room[]>([]);
-const hotels = ref<Hotel[]>([]);
+const rooms = ref<RoomQueryDetail[]>([]);
+const hotels = ref<HotelResponse[]>([]);
 const isLoading = ref(true);
 
 const searchParams = ref<AvailableRoomSearchParams>({
@@ -21,9 +21,9 @@ const searchParams = ref<AvailableRoomSearchParams>({
 });
 
 // Form State
-const selectedRoom = ref<Room | null>(null);
+const selectedRoom = ref<RoomQueryDetail | null>(null);
 const newReservation = ref<GuestCreationRequest>({
-  voucherNumber: '', roomId: 0, checkInDate: '', checkOutDate: '',
+  roomId: 0, checkInDate: '', checkOutDate: '',
   guests: [{ firstname: '', lastname: '' }]
 });
 
@@ -54,10 +54,9 @@ const handleAvailabilitySearch = async () => {
   }
 };
 
-const selectRoomForBooking = (room: Room) => {
+const selectRoomForBooking = (room: RoomQueryDetail) => {
   selectedRoom.value = room;
   newReservation.value = {
-    voucherNumber: 'VCH-' + Date.now().toString().slice(-6),
     roomId: room.id!,
     checkInDate: searchParams.value.checkInDate,
     checkOutDate: searchParams.value.checkOutDate,
@@ -123,7 +122,6 @@ onMounted(async () => {
       if (room) {
         selectedRoom.value = room;
         newReservation.value.roomId = room.id!;
-        newReservation.value.voucherNumber = 'VCH-' + Date.now().toString().slice(-6);
         newReservation.value.guests = Array.from(
           { length: searchParams.value.numberOfPerson },
           () => ({ firstname: '', lastname: '' })
@@ -316,14 +314,6 @@ onMounted(async () => {
             </div>
             
             <form @submit.prevent="submitReservation">
-              <div class="form-group mt-20">
-                <label>Voucher Numarası <span class="required">*</span></label>
-                <div class="input-with-icon">
-                  <Ticket :size="18" class="input-icon" />
-                  <input v-model="newReservation.voucherNumber" type="text" class="pl-40" required />
-                </div>
-              </div>
-              
               <div class="dynamic-guests mt-20">
                 <div class="guests-header">
                   <label>Konaklayacak Misafirler</label>
