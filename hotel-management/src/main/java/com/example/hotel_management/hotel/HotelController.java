@@ -1,11 +1,23 @@
 package com.example.hotel_management.hotel;
 
-import com.example.hotel_management.hotel.request.HotelCreationRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.hotel_management.hotel.dto.HotelRequest;
+import com.example.hotel_management.hotel.dto.HotelResponse;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/hotels")
@@ -16,17 +28,17 @@ public class HotelController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Hotel createHotel(@RequestBody HotelCreationRequest request) {
+    public HotelResponse createHotel(@Valid @RequestBody HotelRequest.Creation request) {
         return hotelService.createHotel(request);
     }
 
     @GetMapping
-    public List<Hotel> getAllHotels() {
+    public List<HotelResponse> getAllHotels() {
         return hotelService.getAllHotels();
     }
 
     @GetMapping("/{id}")
-    public Hotel getHotelById(@PathVariable Long id) {
+    public HotelResponse getHotelById(@PathVariable Long id) {
         return hotelService.getHotelById(id);
     }
 
@@ -37,7 +49,7 @@ public class HotelController {
     }
 
     @PutMapping("/{id}")
-    public Hotel updateHotel(@PathVariable Long id, @RequestBody HotelCreationRequest request) {
+    public HotelResponse updateHotel(@PathVariable Long id, @Valid @RequestBody HotelRequest.Update request) {
         return hotelService.updateHotel(id, request);
     }
 }
