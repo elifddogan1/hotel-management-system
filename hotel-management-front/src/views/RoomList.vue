@@ -35,7 +35,7 @@ const filteredRooms = computed(() => {
 });
 
 const goToDetail = (room: RoomQueryDetail) => {
-  router.push({ name: 'RoomDetail', params: { hotelId: room.hotelId, roomId: room.id } });
+  router.push({ name: 'room-detail', params: { hotelId: room.hotelId, roomId: room.id } });
 };
 
 onMounted(() => {
