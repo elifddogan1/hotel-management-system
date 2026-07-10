@@ -28,22 +28,23 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
+    private final RoomMapper roomMapper;
 
     public List<RoomResponse.QueryDetail> getAllRooms() {
         return roomRepository.findAll().stream()
-                .map(this::convertToQueryDetailResponse)
+                .map(roomMapper::toQueryDetail)
                 .toList();
     }
 
     public List<RoomResponse.QueryDetail> getRoomsByHotelId(Long hotelId) {
         return roomRepository.findByHotelId(hotelId).stream()
-                .map(this::convertToQueryDetailResponse)
+                .map(roomMapper::toQueryDetail)
                 .toList();
     }
 
     public RoomResponse.QueryDetail getRoomById(Long roomId) {
         Room room = getRoomEntityById(roomId);
-        return convertToQueryDetailResponse(room);
+        return roomMapper.toQueryDetail(room);
     }
 
     @Transactional
@@ -64,7 +65,7 @@ public class RoomService {
                 .build();
 
         room = roomRepository.save(room);
-        return convertToCreationResponse(room);
+        return roomMapper.toCreation(room);
     }
 
     @Transactional
@@ -104,7 +105,7 @@ public class RoomService {
         room.setMaxCapacity(request.getMaxCapacity());
         
         room = roomRepository.save(room);
-        return convertToCreationResponse(room);
+        return roomMapper.toCreation(room);
     }
 
     @Transactional
@@ -140,7 +141,7 @@ public class RoomService {
         Page<Room> roomPage = roomRepository.findAll(spec, pageable);
 
         List<RoomResponse.QueryDetail> dtoList = roomPage.getContent().stream()
-                .map(this::convertToQueryDetailResponse)
+                .map(roomMapper::toQueryDetail)
                 .toList();
 
         return PagedResponse.<RoomResponse.QueryDetail>builder()
@@ -169,8 +170,21 @@ public class RoomService {
         return filterOptimalRooms(roomsWithSufficientCapacity, checkInDate, checkOutDate);
     }
 
+    public Boolean isRoomAvailable(Room room, int guestCount, LocalDate checkIn, LocalDate checkOut,
+                        String ignoreVoucherNumber) {
+                if (room.getMaxCapacity() < guestCount) {
+                        throw new IllegalArgumentException("The room's maximum capacity is " + room.getMaxCapacity()
+                                        + ", but " + guestCount + " guests were requested.");
+                }
+                return room.getGuests().stream()
+                                .filter(guest -> ignoreVoucherNumber == null
+                                                || !guest.getVoucherNumber().equals(ignoreVoucherNumber))
+                                .noneMatch(guest -> guest.getCheckOutDate().isAfter(checkIn)
+                                                && guest.getCheckInDate().isBefore(checkOut));
+        }
 
-    private Room getRoomEntityById(Long roomId) {
+
+    public Room getRoomEntityById(Long roomId) {
         return roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room with ID " + roomId + " could not be found."));
     }
@@ -180,28 +194,7 @@ public class RoomService {
                 .filter(room -> room.getGuests() == null || room.getGuests().stream()
                         .noneMatch(guest -> guest.getCheckOutDate().isAfter(checkInDate)
                                 && guest.getCheckInDate().isBefore(checkOutDate)))
-                .map(this::convertToQueryDetailResponse)
+                .map(roomMapper::toQueryDetail)
                 .toList();
-    }
-
-    private RoomResponse.QueryDetail convertToQueryDetailResponse(Room room) {
-        return RoomResponse.QueryDetail.builder()
-                .id(room.getId())
-                .roomNumber(room.getRoomNumber())
-                .roomType(room.getRoomType())
-                .maxCapacity(room.getMaxCapacity())
-                .hotelId(room.getHotel() != null ? room.getHotel().getId() : null)
-                .hotelName(room.getHotel() != null ? room.getHotel().getName() : null)
-                .build();
-    }
-
-    private RoomResponse.Creation convertToCreationResponse(Room room) {
-        return RoomResponse.Creation.builder()
-                .id(room.getId())
-                .roomNumber(room.getRoomNumber())
-                .roomType(room.getRoomType())
-                .maxCapacity(room.getMaxCapacity())
-                .hotelId(room.getHotel() != null ? room.getHotel().getId() : null)
-                .build();
     }
 }
