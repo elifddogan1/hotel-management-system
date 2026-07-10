@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { hotelService, type Hotel } from '../services/hotelService';
-import { roomService, type Room, type RoomCreationRequest } from '../services/roomService';
-import { guestService, type Guest } from '../services/guestService';
+import { hotelService, type HotelResponse } from '../services/hotelService';
+import { roomService, type RoomQueryDetail, type RoomCreationRequest } from '../services/roomService';
+import { guestService, type GuestQueryDetail } from '../services/guestService';
 // Profesyonel ikonlarımızı ekledik
 import { ArrowLeft, MapPin, Phone, BedDouble, CalendarCheck, PlusCircle, Trash2, TicketX, Loader2, Building2 } from 'lucide-vue-next';
 
@@ -11,15 +11,16 @@ const route = useRoute();
 const router = useRouter();
 const hotelId = Number(route.params.id);
 
-const hotel = ref<Hotel | null>(null);
-const rooms = ref<Room[]>([]);
-const guests = ref<Guest[]>([]);
+const hotel = ref<HotelResponse | null>(null);
+const rooms = ref<RoomQueryDetail[]>([]);
+const guests = ref<GuestQueryDetail[]>([]);
 
 const activeTab = ref<'rooms' | 'reservations'>('rooms');
 const isLoading = ref(true);
 const errorMessage = ref('');
 
 const newRoom = ref<RoomCreationRequest>({
+  hotelId: hotelId,
   roomNumber: '',
   roomType: 'STANDARD',
   maxCapacity: 2
@@ -29,13 +30,7 @@ const loadHotelData = async () => {
   isLoading.value = true;
   errorMessage.value = '';
   try {
-    const fetchedHotels = await hotelService.getAllHotels();
-    const foundHotel = fetchedHotels.find(h => h.id === hotelId);
-    
-    if (!foundHotel) {
-      errorMessage.value = 'Otel bulunamadı.';
-      return;
-    }
+    const foundHotel = await hotelService.getHotelById(hotelId);
     hotel.value = foundHotel;
 
     const [fetchedRooms, fetchedGuests] = await Promise.all([
@@ -57,8 +52,8 @@ const handleCreateRoom = async () => {
     return;
   }
   try {
-    await roomService.createRoomOnHotel(hotelId, newRoom.value);
-    newRoom.value = { roomNumber: '', roomType: 'STANDARD', maxCapacity: 2 };
+    await roomService.createRoom(newRoom.value);
+    newRoom.value = { hotelId: hotelId, roomNumber: '', roomType: 'STANDARD', maxCapacity: 2 };
     rooms.value = await roomService.getRoomsByHotelId(hotelId);
   } catch (error) {
     alert('Oda eklenirken hata oluştu.');

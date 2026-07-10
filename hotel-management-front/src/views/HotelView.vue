@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { hotelService, type Hotel } from '../services/hotelService';
+import { hotelService, type HotelResponse, type CreateHotelRequest } from '../services/hotelService';
 // Profesyonel ikonları projemize dahil ediyoruz
 import { Building, MapPin, Phone, Settings2, Trash2, PlusCircle, Loader2, Pencil, X } from 'lucide-vue-next';
 
 const router = useRouter();
-const hotels = ref<Hotel[]>([]);
+const hotels = ref<HotelResponse[]>([]);
 const isLoading = ref(true);
 const errorMessage = ref('');
 
-const newHotel = ref<Hotel>({
+const newHotel = ref<CreateHotelRequest>({
   name: '',
   location: '',
   contactInfo: ''
 });
 
 const isEditModalOpen = ref(false);
-const editHotelForm = ref<Hotel>({
-  id: undefined,
+const editHotelForm = ref<HotelResponse>({
+  id: 0,
   name: '',
   location: '',
   contactInfo: ''
@@ -66,7 +66,7 @@ const handleDeleteHotel = async (id: number | undefined) => {
   }
 };
 
-const openEditHotelModal = (hotel: Hotel) => {
+const openEditHotelModal = (hotel: HotelResponse) => {
   editHotelForm.value = { ...hotel };
   isEditModalOpen.value = true;
 };
@@ -82,7 +82,11 @@ const handleUpdateHotel = async () => {
   }
 
   try {
-    await hotelService.updateHotel(editHotelForm.value.id, editHotelForm.value);
+    await hotelService.updateHotel(editHotelForm.value.id, {
+      name: editHotelForm.value.name,
+      location: editHotelForm.value.location,
+      contactInfo: editHotelForm.value.contactInfo
+    });
     isEditModalOpen.value = false;
     await loadHotels();
   } catch (error) {
