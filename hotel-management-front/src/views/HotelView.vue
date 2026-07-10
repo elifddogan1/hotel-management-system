@@ -60,8 +60,9 @@ const handleDeleteHotel = async (id: number | undefined) => {
   try {
     await hotelService.deleteHotel(id);
     await loadHotels();
-  } catch (error) {
-    alert('Otel silinirken bir hata oluştu.');
+  } catch (error: any) {
+    const errorMessage = error.response?.data || 'Otel silinirken bir hata oluştu.';
+    alert(errorMessage);
     console.error(error);
   }
 };

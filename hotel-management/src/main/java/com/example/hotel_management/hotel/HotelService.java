@@ -9,6 +9,7 @@ import com.example.hotel_management.hotel.v1.dto.HotelRequest;
 import com.example.hotel_management.hotel.v1.dto.HotelResponse;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,11 +41,16 @@ public class HotelService {
         return mapToResponse(hotel);
     }
 
+    @Transactional
     public void deleteHotel(Long id) {
-        if (!hotelRepository.existsById(id)) {
-            throw new EntityNotFoundException("Hotel not found with ID: " + id);
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Hotel not found with ID: " + id));
+
+        if (hotel.getRooms() != null && !hotel.getRooms().isEmpty()) {
+            throw new IllegalArgumentException("Bu otele ait odalar bulunmaktadır. Önce odaları silmelisiniz.");
         }
-        hotelRepository.deleteById(id);
+
+        hotelRepository.delete(hotel);
     }
 
     public HotelResponse updateHotel(Long id, HotelRequest.Update request) {

@@ -120,23 +120,50 @@ class HotelServiceTest {
     }
 
     @Test
-    void deleteHotel_WhenHotelExists_ShouldDeleteHotel() {
+    void deleteHotel_WhenHotelExistsAndHasNoRooms_ShouldDeleteHotel() {
         Long hotelId = 1L;
+        Hotel hotel = Hotel.builder()
+                .id(hotelId)
+                .name("Akdeniz Resort")
+                .location("Antalya")
+                .rooms(new ArrayList<>())
+                .build();
         
-        when(hotelRepository.existsById(hotelId)).thenReturn(true);
+        when(hotelRepository.findById(hotelId)).thenReturn(Optional.of(hotel));
 
         hotelService.deleteHotel(hotelId);
 
-        verify(hotelRepository, times(1)).existsById(hotelId);
-        
-        verify(hotelRepository, times(1)).deleteById(hotelId);
+        verify(hotelRepository, times(1)).findById(hotelId);
+        verify(hotelRepository, times(1)).delete(hotel);
+    }
+
+    @Test
+    void deleteHotel_WhenHotelExistsAndHasRooms_ShouldThrowIllegalArgumentException() {
+        Long hotelId = 1L;
+        com.example.hotel_management.room.Room room = com.example.hotel_management.room.Room.builder().id(100L).build();
+        Hotel hotel = Hotel.builder()
+                .id(hotelId)
+                .name("Akdeniz Resort")
+                .location("Antalya")
+                .rooms(List.of(room))
+                .build();
+
+        when(hotelRepository.findById(hotelId)).thenReturn(Optional.of(hotel));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            hotelService.deleteHotel(hotelId);
+        });
+
+        assertEquals("Bu otele ait odalar bulunmaktadır. Önce odaları silmelisiniz.", exception.getMessage());
+        verify(hotelRepository, times(1)).findById(hotelId);
+        verify(hotelRepository, never()).delete(any(Hotel.class));
     }
 
     @Test
     void deleteHotel_WhenHotelDoesNotExist_ShouldThrowEntityNotFoundException() {
         Long hotelId = 99L;
         
-        when(hotelRepository.existsById(hotelId)).thenReturn(false);
+        when(hotelRepository.findById(hotelId)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             hotelService.deleteHotel(hotelId);
@@ -144,9 +171,8 @@ class HotelServiceTest {
 
         assertEquals("Hotel not found with ID: " + hotelId, exception.getMessage());
 
-        verify(hotelRepository, times(1)).existsById(hotelId);
-        
-        verify(hotelRepository, never()).deleteById(anyLong());
+        verify(hotelRepository, times(1)).findById(hotelId);
+        verify(hotelRepository, never()).delete(any(Hotel.class));
     }
 
     @Test
