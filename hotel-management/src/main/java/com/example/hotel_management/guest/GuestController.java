@@ -23,7 +23,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/guests")
+@RequestMapping("/api/v1/guests")
 @RequiredArgsConstructor
 public class GuestController {
 
