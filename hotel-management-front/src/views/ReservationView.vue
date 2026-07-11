@@ -65,6 +65,14 @@ const selectRoomForBooking = (room: RoomQueryDetail) => {
   };
 };
 
+const todayDate = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
+
 const isDirectBooking = computed(() => !!route.query.roomId);
 
 const selectedHotel = computed(() => {
@@ -174,11 +182,11 @@ onMounted(async () => {
               <div class="flex-row">
                 <div class="form-group half">
                   <label>Giriş Tarihi <span class="required">*</span></label>
-                  <input v-model="searchParams.checkInDate" type="date" required />
+                  <input v-model="searchParams.checkInDate" type="date" :min="todayDate" required />
                 </div>
                 <div class="form-group half">
                   <label>Çıkış Tarihi <span class="required">*</span></label>
-                  <input v-model="searchParams.checkOutDate" type="date" required />
+                  <input v-model="searchParams.checkOutDate" type="date" :min="searchParams.checkInDate || todayDate" required />
                 </div>
               </div>
               <div class="flex-row mt-10">
@@ -283,11 +291,11 @@ onMounted(async () => {
               <div class="flex-row">
                 <div class="form-group half">
                   <label>Giriş Tarihi <span class="required">*</span></label>
-                  <input v-model="newReservation.checkInDate" type="date" required />
+                  <input v-model="newReservation.checkInDate" type="date" :min="todayDate" required />
                 </div>
                 <div class="form-group half">
                   <label>Çıkış Tarihi <span class="required">*</span></label>
-                  <input v-model="newReservation.checkOutDate" type="date" required />
+                  <input v-model="newReservation.checkOutDate" type="date" :min="newReservation.checkInDate || todayDate" required />
                 </div>
               </div>
               <div class="flex-row mt-10">
