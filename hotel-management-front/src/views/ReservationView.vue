@@ -56,11 +56,12 @@ const handleAvailabilitySearch = async () => {
 
 const selectRoomForBooking = (room: RoomQueryDetail) => {
   selectedRoom.value = room;
+  const guestCount = Math.min(searchParams.value.numberOfPerson, room.maxCapacity);
   newReservation.value = {
     roomId: room.id!,
     checkInDate: searchParams.value.checkInDate,
     checkOutDate: searchParams.value.checkOutDate,
-    guests: Array.from({ length: searchParams.value.numberOfPerson }, () => ({ firstname: '', lastname: '' }))
+    guests: Array.from({ length: guestCount }, () => ({ firstname: '', lastname: '' }))
   };
 };
 
@@ -72,6 +73,10 @@ const selectedHotel = computed(() => {
 });
 
 const addGuestField = () => {
+  if (selectedRoom.value && newReservation.value.guests.length >= selectedRoom.value.maxCapacity) {
+    alert(`Odadaki kişi sayısı maksimum ${selectedRoom.value.maxCapacity} olabilir.`);
+    return;
+  }
   newReservation.value.guests.push({ firstname: '', lastname: '' });
   if (isDirectBooking.value) {
     searchParams.value.numberOfPerson = newReservation.value.guests.length;
@@ -98,10 +103,17 @@ const submitReservation = async () => {
 // Keep guests array in sync with numberOfPerson
 watch(() => searchParams.value.numberOfPerson, (newVal) => {
   if (isDirectBooking.value && newVal && newVal > 0) {
+    const maxCap = selectedRoom.value?.maxCapacity || 10;
+    if (newVal > maxCap) {
+      searchParams.value.numberOfPerson = maxCap;
+      return;
+    }
     const currentLength = newReservation.value.guests.length;
     if (newVal > currentLength) {
       for (let i = currentLength; i < newVal; i++) {
-        newReservation.value.guests.push({ firstname: '', lastname: '' });
+        if (newReservation.value.guests.length < maxCap) {
+          newReservation.value.guests.push({ firstname: '', lastname: '' });
+        }
       }
     } else if (newVal < currentLength) {
       newReservation.value.guests.splice(newVal);
@@ -122,8 +134,9 @@ onMounted(async () => {
       if (room) {
         selectedRoom.value = room;
         newReservation.value.roomId = room.id!;
+        const guestCount = Math.min(searchParams.value.numberOfPerson, room.maxCapacity);
         newReservation.value.guests = Array.from(
-          { length: searchParams.value.numberOfPerson },
+          { length: guestCount },
           () => ({ firstname: '', lastname: '' })
         );
       }
@@ -317,7 +330,12 @@ onMounted(async () => {
               <div class="dynamic-guests mt-20">
                 <div class="guests-header">
                   <label>Konaklayacak Misafirler</label>
-                  <button type="button" class="btn-outline-sm" @click="addGuestField">
+                  <button 
+                    type="button" 
+                    class="btn-outline-sm" 
+                    @click="addGuestField"
+                    :disabled="selectedRoom && newReservation.guests.length >= selectedRoom.maxCapacity"
+                  >
                     <UserPlus :size="14" /> Yeni Kişi Ekle
                   </button>
                 </div>
@@ -475,6 +493,13 @@ input:focus, select:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56
   color: #475569; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; 
 }
 .btn-outline-sm:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+.btn-outline-sm:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
 .guest-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .guest-number { background: #e2e8f0; color: #475569; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.85rem; font-weight: bold; flex-shrink: 0; }
